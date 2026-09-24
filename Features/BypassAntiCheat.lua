@@ -1,38 +1,19 @@
--- ==================================================
--- YOKUDO HUB | FEATURE | Bypass Anti Cheat
--- Humanoid Replace + Anti Death
--- ✅ Restart Features តាមរយៈ CharacterSystem
--- ==================================================
-
 local Players = game:GetService("Players")
 
 local Player = Players.LocalPlayer
 
--- ==================================================
--- MAIN FUNCTION
--- ==================================================
 local function RunBypassAntiCheat()
     local Character = Player.Character
     if not Character then return end
 
     local OldHumanoid = Character:FindFirstChildOfClass("Humanoid")
     if not OldHumanoid then
-        warn("[YOKUDO] Humanoid not found")
+        warn("Humanoid not found")
         return
     end
 
-    print("========================================")
-    print("[YOKUDO] START HUMANOID REPLACE")
-    print("========================================")
-
-    --==================================================
-    -- ANTI DEATH SETTINGS
-    --==================================================
     local GodMode = true
 
-    --==================================================
-    -- SAVE JUMP PROPERTIES
-    --==================================================
     local SavedJumpProperties = {}
 
     local function SaveJumpProperty(Property)
@@ -48,17 +29,11 @@ local function RunBypassAntiCheat()
     SaveJumpProperty("JumpHeight")
     SaveJumpProperty("UseJumpPower")
 
-    --==================================================
-    -- SAVE STATE MACHINE
-    --==================================================
     local SavedEvaluateStateMachine
     pcall(function()
         SavedEvaluateStateMachine = OldHumanoid.EvaluateStateMachine
     end)
 
-    --==================================================
-    -- SAVE ALL HUMANOID STATE SETTINGS
-    --==================================================
     local SavedStates = {}
     local States = {
         Enum.HumanoidStateType.FallingDown,
@@ -88,19 +63,13 @@ local function RunBypassAntiCheat()
         end
     end
 
-    --==================================================
-    -- CLONE HUMANOID
-    --==================================================
     local NewHumanoid = OldHumanoid:Clone()
     if not NewHumanoid then
-        warn("[YOKUDO] Failed to clone Humanoid")
+        warn("Failed to clone Humanoid")
         return
     end
     NewHumanoid.Name = OldHumanoid.Name
 
-    --==================================================
-    -- MOVE HUMANOID CHILDREN
-    --==================================================
     for _, Child in ipairs(OldHumanoid:GetChildren()) do
         local ExistingCloneChild = NewHumanoid:FindFirstChild(Child.Name)
         if ExistingCloneChild then
@@ -113,33 +82,22 @@ local function RunBypassAntiCheat()
         end)
     end
 
-    --==================================================
-    -- IMPORTANT REPLACEMENT ORDER
-    --==================================================
     OldHumanoid:Destroy()
     task.wait()
     NewHumanoid.Parent = Character
     task.wait()
 
     if not NewHumanoid.Parent then
-        warn("[YOKUDO] New Humanoid was removed")
+        warn("New Humanoid was removed")
         return
     end
 
-    print("[YOKUDO] New Humanoid:", NewHumanoid)
-
-    --==================================================
-    -- UPDATE CHARACTER SYSTEM
-    --==================================================
     if _G.YOKUDO_CharacterSystem then
         _G.YOKUDO_CharacterSystem.CurrentHumanoid = NewHumanoid
         _G.YOKUDO_CharacterSystem.CurrentRoot = Character:FindFirstChild("HumanoidRootPart")
-        print("[YOKUDO] CharacterSystem Updated with New Humanoid")
+        print("CharacterSystem Updated with New Humanoid")
     end
 
-    --==================================================
-    -- RESTORE JUMP PROPERTIES
-    --==================================================
     pcall(function()
         NewHumanoid.UseJumpPower = SavedJumpProperties.UseJumpPower
     end)
@@ -150,40 +108,26 @@ local function RunBypassAntiCheat()
         NewHumanoid.JumpHeight = SavedJumpProperties.JumpHeight
     end)
 
-    --==================================================
-    -- RESTORE EVALUATE STATE MACHINE
-    --==================================================
     pcall(function()
         if SavedEvaluateStateMachine ~= nil then
             NewHumanoid.EvaluateStateMachine = SavedEvaluateStateMachine
         end
     end)
 
-    --==================================================
-    -- RESTORE HUMANOID STATE SETTINGS
-    --==================================================
     for State, Enabled in pairs(SavedStates) do
         pcall(function()
             NewHumanoid:SetStateEnabled(State, Enabled)
         end)
     end
 
-    --==================================================
-    -- ENSURE ANIMATOR
-    --==================================================
     local Animator = NewHumanoid:FindFirstChildOfClass("Animator")
     if not Animator then
         Animator = Instance.new("Animator")
         Animator.Parent = NewHumanoid
     end
-    print("[YOKUDO] Animator:", Animator)
 
-    --==================================================
-    -- RESTART ANIMATE
-    --==================================================
     local Animate = Character:FindFirstChild("Animate")
     if Animate then
-        print("[YOKUDO] Restarting Animate...")
         pcall(function()
             Animate.Disabled = true
         end)
@@ -191,14 +135,10 @@ local function RunBypassAntiCheat()
         pcall(function()
             Animate.Disabled = false
         end)
-        print("[YOKUDO] Animate restarted")
     end
 
     task.wait(0.15)
 
-    --==================================================
-    -- ANTI DEATH FUNCTIONS
-    --==================================================
     local function LockHealth()
         if GodMode and NewHumanoid and NewHumanoid.Parent then
             pcall(function()
@@ -232,6 +172,7 @@ local function RunBypassAntiCheat()
                 end
             end
         end)
+
         Humanoid.Died:Connect(function()
             if GodMode and Humanoid and Humanoid.Parent then
                 pcall(function()
@@ -258,25 +199,22 @@ local function RunBypassAntiCheat()
         end
     end)
 
-    --==================================================
-    -- CONTROL MODULE
-    --==================================================
     local function RefreshControls()
         local PlayerScripts = Player:FindFirstChild("PlayerScripts")
         if not PlayerScripts then
-            warn("[YOKUDO] PlayerScripts not found")
+            warn("PlayerScripts not found")
             return
         end
         local PlayerModule = PlayerScripts:FindFirstChild("PlayerModule")
         if not PlayerModule then
-            warn("[YOKUDO] PlayerModule not found")
+            warn("PlayerModule not found")
             return
         end
         local Success, Module = pcall(function()
             return require(PlayerModule)
         end)
         if not Success or not Module then
-            warn("[YOKUDO] Failed to require PlayerModule")
+            warn("Failed to require PlayerModule")
             return
         end
         local Controls
@@ -284,7 +222,7 @@ local function RunBypassAntiCheat()
             Controls = Module:GetControls()
         end)
         if not Controls then
-            warn("[YOKUDO] Controls not found")
+            warn("Controls not found")
             return
         end
         pcall(function()
@@ -295,15 +233,10 @@ local function RunBypassAntiCheat()
             Controls:UpdateActiveControlModuleEnabled()
         end)
         task.wait()
-        print("[YOKUDO] Controls Humanoid:", Controls.humanoid)
-        print("[YOKUDO] Same Humanoid:", Controls.humanoid == NewHumanoid)
     end
 
     RefreshControls()
 
-    --==================================================
-    -- CAMERA
-    --==================================================
     pcall(function()
         local Camera = workspace.CurrentCamera
         if Camera then
@@ -311,9 +244,6 @@ local function RunBypassAntiCheat()
         end
     end)
 
-    --==================================================
-    -- FINAL STATE RESTORE
-    --==================================================
     task.wait(0.25)
 
     if not Character.Parent then
@@ -357,9 +287,7 @@ local function RunBypassAntiCheat()
         end
     end)
 
-    --==================================================
-    -- FINAL ANIMATE RESTART
-    --==================================================
+    
     local CurrentAnimate = Character:FindFirstChild("Animate")
     if CurrentAnimate then
         pcall(function()
@@ -371,37 +299,20 @@ local function RunBypassAntiCheat()
         end)
     end
 
-    --==================================================
-    -- ✅ RESTART FEATURES តាមរយៈ CHARACTER SYSTEM
-    --==================================================
     if _G.YOKUDO_CharacterSystem then
         task.spawn(function()
             task.wait(0.5)
             _G.YOKUDO_CharacterSystem:RestartAllFeatures()
         end)
     end
-
-    print("")
-    print("========================================")
-    print("[YOKUDO] HUMANOID REPLACE + ANTI DEATH COMPLETE")
-    print("========================================")
 end
 
--- ==================================================
--- AUTO RE-RUN ON CHARACTER ADDED
--- ==================================================
 Player.CharacterAdded:Connect(function(Character)
-    task.wait(1) -- រង់ចាំ Character Load
+    task.wait(1)
     RunBypassAntiCheat()
-    print("[YOKUDO] Bypass Anti Cheat: Re-applied on new Character")
 end)
 
--- ==================================================
--- RUN IMMEDIATELY
--- ==================================================
 task.spawn(function()
-    task.wait(2) -- រង់ចាំ Features ផ្សេង Load មុន
+    task.wait(2)
     RunBypassAntiCheat()
 end)
-
-print("✅ BypassAntiCheat Feature Loaded (Restart Features via CharacterSystem)")
