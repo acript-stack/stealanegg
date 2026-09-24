@@ -1130,30 +1130,5 @@ _G.YOKUDO_VIPTP = {
     SAFE_ZONE = SAFE_ZONE,
 }
 
--- ==================================================
--- REGISTER WITH CHARACTER SYSTEM
--- ==================================================
-if _G.YOKUDO_CharacterSystem then
-    _G.YOKUDO_CharacterSystem:RegisterFeature({
-        Name = "VIPTP",
-        Enable = Enable,
-        Disable = Disable,
-        IsEnabled = function() return Running end,
-        OnCharacterAdded = function(Char, Hum, Root)
-            if Running then
-                task.wait(1)
-                pcall(function()
-                    local TargetId = TARGET_UID
-                    Disable()
-                    task.wait(0.5)
-                    if TargetId then
-                        SetTargetId(TargetId)
-                    end
-                    Enable()
-                end)
-            end
-        end
-    })
-end
 
 print("✅ VIPTP Loaded (AFK Farm Only | Instant | Auto Fly Back | No Limit)")
