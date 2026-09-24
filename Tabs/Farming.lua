@@ -9,12 +9,12 @@
 local TabsManager = _G.YOKUDO_TabsManager
 local TweenService = game:GetService("TweenService")
 
-local FarmingTab, FarmingPage = TabsManager:RegisterTab("Farming", 2, "FARMING")
+local FarmingTab, FarmingPage = TabsManager:RegisterTab("Auto Farm", 2, "FARMING")
 
 -- ==================================================
 -- CONTENT
 -- ==================================================
-CreateSectionTitle(FarmingPage, "Farming", 1)
+CreateSectionTitle(FarmingPage, "Auto Farm", 1)
 
 -- ==================================================
 -- SELECT EGG TYPE (DROPDOWN)
