@@ -1,9 +1,4 @@
--- ==================================================
--- YOKUDO HUB | STEAL AN EGG | Loader
--- ✅ Load CharacterSystem មុន Features
--- ==================================================
-
-local BASE_URL = "https://raw.githubusercontent.com/betdoyvaka/stealanegg/main/"
+local BASE_URL = "https://raw.githubusercontent.com/acript-stack/stealanegg/refs/heads/main/"
 
 _G.YOKUDO_EnablePrint = false
 
@@ -14,11 +9,6 @@ print = function(...)
     end
 end
 
-print("🔵 Loading YOKUDO HUB...")
-
--- ==================================================
--- CACHE SYSTEM
--- ==================================================
 _G.YOKUDO_Cache = _G.YOKUDO_Cache or {}
 
 local function GetScript(path)
@@ -31,19 +21,11 @@ local function GetScript(path)
     return script
 end
 
--- ==================================================
--- WAIT UNTIL GAME IS LOADED
--- ==================================================
 repeat task.wait() until game:IsLoaded() and game.Players.LocalPlayer
 
 local Player = game.Players.LocalPlayer
 local CoreGui = game:GetService("CoreGui")
 
-print("✅ Game loaded, Player: " .. Player.Name)
-
--- ==================================================
--- CREATE LOADING SCREEN
--- ==================================================
 local function CreateLoadingScreen()
     local LoadingGui = Instance.new("ScreenGui")
     LoadingGui.Name = "LoadingScreen"
@@ -78,7 +60,7 @@ local function CreateLoadingScreen()
     Title.Size = UDim2.new(1, -30, 0, 28)
     Title.Position = UDim2.new(0, 15, 0, 8)
     Title.BackgroundTransparency = 1
-    Title.Text = "YOKUDO HUB"
+    Title.Text = "YZZ HUB"
     Title.TextColor3 = Color3.fromRGB(255, 255, 255)
     Title.TextSize = 20
     Title.TextXAlignment = Enum.TextXAlignment.Center
@@ -150,142 +132,67 @@ local function CreateLoadingScreen()
     }
 end
 
--- ==================================================
--- CREATE LOADING SCREEN
--- ==================================================
 local Loading = CreateLoadingScreen()
-Loading.Update(5)
 
--- ==================================================
--- LOAD CORE FILES
--- ==================================================
-Loading.Update(10)
+Loading.Update(5)
 loadstring(GetScript("Config.lua"))()
 
-Loading.Update(15)
+Loading.Update(10)
 loadstring(GetScript("UI.lua"))()
 
-Loading.Update(20)
+Loading.Update(13)
 loadstring(GetScript("Components.lua"))()
 
--- ==================================================
--- LOAD TABS MANAGER
--- ==================================================
-Loading.Update(25)
+Loading.Update(18)
 loadstring(GetScript("Tabs/Init.lua"))()
 
--- ==================================================
--- ✅ LOAD CHARACTER SYSTEM (មុន Features)
--- ==================================================
-Loading.Update(26)
-loadstring(GetScript("Features/CharacterSystem.lua"))()
-
-if _G.YOKUDO_CharacterSystem then
-    _G.YOKUDO_CharacterSystem:Init()
-end
-
--- ==================================================
--- LOAD FEATURES
--- ==================================================
-Loading.Update(28)
-loadstring(GetScript("Features/AntiAFK.lua"))()
-
-Loading.Update(30)
+Loading.Update(20)
 loadstring(GetScript("Features/WalkSpeed.lua"))()
 
-Loading.Update(33)
+Loading.Update(24)
 loadstring(GetScript("Features/AntiTrap.lua"))()
 
-Loading.Update(36)
-loadstring(GetScript("Features/GodMode.lua"))()
+Loading.Update(28)
+loadstring(GetScript("Features/CharacterSystem.lua"))()
 
-Loading.Update(39)
+Loading.Update(34)
 loadstring(GetScript("Features/TeleportSystem.lua"))()
 
-Loading.Update(42)
+Loading.Update(38)
 loadstring(GetScript("Features/AutoFarm.lua"))()
 
-Loading.Update(45)
-loadstring(GetScript("Features/AutoAttack.lua"))()
-
-Loading.Update(48)
-loadstring(GetScript("Features/AFKSystem.lua"))()
-
--- ✅ EggCheckPremium (មុន FarmingManager)
-Loading.Update(50)
+Loading.Update(42)
 loadstring(GetScript("Features/EggCheckPremium.lua"))()
 
-Loading.Update(51)
-loadstring(GetScript("Features/AttackDrone.lua"))()
-
-Loading.Update(54)
-loadstring(GetScript("Features/ManagerDrone.lua"))()
-
-Loading.Update(57)
-loadstring(GetScript("Features/ManualFastClick.lua"))()
-
--- ✅ FarmingManager (ប្រើ TeleportSystem + EggCheckPremium)
-Loading.Update(59)
+Loading.Update(45)
 loadstring(GetScript("Features/FarmingManager.lua"))()
 
--- ✅ ConfigSystem
-Loading.Update(60)
+Loading.Update(50)
 loadstring(GetScript("Features/ConfigSystem.lua"))()
 
--- ==================================================
--- LOAD TABS
--- ==================================================
-Loading.Update(62)
+Loading.Update(65)
 loadstring(GetScript("Tabs/Info.lua"))()
 
-Loading.Update(65)
+Loading.Update(66)
 loadstring(GetScript("Tabs/Farming.lua"))()
 
-Loading.Update(70)
-loadstring(GetScript("Tabs/Combat.lua"))()
-
-Loading.Update(75)
+Loading.Update(67)
 loadstring(GetScript("Tabs/AutoFarming.lua"))()
 
-Loading.Update(80)
-loadstring(GetScript("Tabs/Event.lua"))()
-
-Loading.Update(85)
+Loading.Update(70)
 loadstring(GetScript("Tabs/HopServer.lua"))()
 
-Loading.Update(90)
+Loading.Update(80)
 loadstring(GetScript("Tabs/Setting.lua"))()
 
--- ==================================================
--- SELECT DEFAULT TAB
--- ==================================================
-Loading.Update(92)
+Loading.Update(90)
 if _G.YOKUDO_TabsManager then
     _G.YOKUDO_TabsManager:SelectTabByName("Info")
 end
 
-Loading.Update(95)
-
--- ==================================================
--- LOAD ANTI CHEAT
--- ==================================================
-Loading.Update(98)
-loadstring(GetScript("Features/BypassAntiCheat.lua"))()
-
--- ==================================================
--- ✅ WAIT 2 SECONDS THEN APPLY CONFIG
--- ==================================================
-print("⏳ Waiting 2s before applying config...")
-task.wait(2)
-
-if _G.YOKUDO_ConfigSystem then
-    print("🔧 Applying Config...")
-    _G.YOKUDO_ConfigSystem.Load()
-end
-
 Loading.Update(100)
 
-task.wait(0.3)
+loadstring(GetScript("Features/BypassAntiCheat.lua"))()
+
+task.wait(0.15)
 Loading.Destroy()
-print("✅ Loading Screen Closed!")
-print("🚀 YOKUDO HUB | Ready!")
