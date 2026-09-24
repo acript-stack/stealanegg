@@ -1,17 +1,10 @@
--- ==================================================
--- YOKUDO HUB | NEW PROJECT | Config
--- ==================================================
-
 _G.YOKUDO = {
-    -- Hub Info
-    Name = "YOKUDO HUB | Steal An Egg",
-    Version = "telegram : @maibigber",
-    Author = "Yokudo",
+    Name = "YZZ HUB | Steal An Egg",
+    Version = "Tiktok : @robloxscrips5",
+    Author = "Yuzuh",
 
-    -- Asset
     AssetID = "rbxassetid://101352576986760",
 
-    -- UI
     UI = {
         Width = 480,
         Height = 340,
@@ -27,5 +20,3 @@ _G.YOKUDO = {
         }
     },
 }
-
-print("✅ Config Loaded")
