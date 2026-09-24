@@ -1,20 +1,10 @@
---==================================================
--- YOKUDO HUB | TAB | Auto Farming
---==================================================
-
 local TabsManager = _G.YOKUDO_TabsManager
 local TweenService = game:GetService("TweenService")
 
 local AutoFarmingTab, AutoFarmingPage = TabsManager:RegisterTab("Manual Steal", 4, "AUTO_FARMING")
 
---==================================================
--- CONTENT
---==================================================
 CreateSectionTitle(AutoFarmingPage, "Manual Steal", 1)
 
---==================================================
--- FEATURE 1: Click Get Egg
---==================================================
 local GetEggBox = Instance.new("Frame")
 GetEggBox.Size = UDim2.new(1, 0, 0, 60)
 GetEggBox.BackgroundColor3 = Color3.fromRGB(28, 29, 42)
@@ -117,12 +107,12 @@ end
 local function ToggleGetEgg()
     GetEggEnabled = not GetEggEnabled
     GetEggCheck.Visible = GetEggEnabled
+
     if GetEggEnabled then
         GetEggCheckButton.BackgroundColor3 = Color3.fromRGB(105, 90, 190)
         GetEggCheckButton.BackgroundTransparency = 0
         GetEggCheckStroke.Color = Color3.fromRGB(135, 120, 225)
 
-        -- ✅ Call StartTeleport (reads Method from Setting)
         if _G.YOKUDO_AutoFarm then
             _G.YOKUDO_AutoFarm.StartTeleport()
         end
@@ -131,7 +121,6 @@ local function ToggleGetEgg()
         GetEggCheckButton.BackgroundTransparency = 0.85
         GetEggCheckStroke.Color = Color3.fromRGB(255, 255, 255)
 
-        -- ✅ Call StopTeleport
         if _G.YOKUDO_AutoFarm then
             _G.YOKUDO_AutoFarm.StopTeleport()
         end
@@ -142,9 +131,6 @@ GetEggCheckButton.MouseButton1Click:Connect(function()
     ToggleGetEgg()
 end)
 
---==================================================
--- FEATURE 2: Start Check Egg
---==================================================
 local CheckEggHolder = Instance.new("Frame")
 CheckEggHolder.Size = UDim2.new(1, 0, 0, 44)
 CheckEggHolder.BackgroundColor3 = Color3.fromRGB(28, 29, 42)
@@ -298,11 +284,8 @@ local function CreateEggEntry(EggData)
 
     SelectButton.MouseButton1Click:Connect(function()
         UpdateGetEggBox(EggData.Icon, EggData.DisplayName, EggData.EarningRate, EggData.Id)
-
-        -- ✅ Save EggData ទាំងមូល
         SelectedEggData = EggData
 
-        -- ✅ គ្រាន់តែ Save មិន Enable
         if _G.YOKUDO_AutoFarm then
             _G.YOKUDO_AutoFarm.SelectEgg(EggData)
         end
@@ -312,8 +295,13 @@ local function CreateEggEntry(EggData)
 end
 
 local function RefreshEggList()
-    if not CheckEggEnabled then return end
-    if not _G.YOKUDO_AutoFarm then return end
+    if not CheckEggEnabled then
+        return
+    end
+
+    if not _G.YOKUDO_AutoFarm then
+        return
+    end
 
     for _, child in ipairs(EggScrollFrame:GetChildren()) do
         if child:IsA("Frame") then
@@ -324,10 +312,12 @@ local function RefreshEggList()
     EggEntries = {}
 
     local Eggs = _G.YOKUDO_AutoFarm.ScanEggs()
+
     for _, EggData in ipairs(Eggs) do
         local Entry = CreateEggEntry(EggData)
         table.insert(EggEntries, Entry)
     end
+
     EggScrollFrame.CanvasSize = UDim2.new(0, 0, 0, #Eggs * 48)
     CheckEggCount.Text = "Egg: " .. #Eggs
 end
@@ -335,26 +325,32 @@ end
 local function ToggleCheckEgg()
     CheckEggEnabled = not CheckEggEnabled
     CheckEggCheck.Visible = CheckEggEnabled
+
     if CheckEggEnabled then
         CheckEggCheckButton.BackgroundColor3 = Color3.fromRGB(105, 90, 190)
         CheckEggCheckButton.BackgroundTransparency = 0
         CheckEggStroke.Color = Color3.fromRGB(135, 120, 225)
+
         if _G.YOKUDO_AutoFarm then
             _G.YOKUDO_AutoFarm.Enable()
         end
+
         RefreshEggList()
     else
         CheckEggCheckButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         CheckEggCheckButton.BackgroundTransparency = 0.85
         CheckEggStroke.Color = Color3.fromRGB(255, 255, 255)
+
         if _G.YOKUDO_AutoFarm then
             _G.YOKUDO_AutoFarm.Disable()
         end
+
         for _, child in ipairs(EggScrollFrame:GetChildren()) do
             if child:IsA("Frame") then
                 child:Destroy()
             end
         end
+
         CheckEggCount.Text = "Egg: 0"
     end
 end
@@ -363,9 +359,6 @@ CheckEggCheckButton.MouseButton1Click:Connect(function()
     ToggleCheckEgg()
 end)
 
---==================================================
--- EGG LIST
---==================================================
 EggScrollFrame = Instance.new("ScrollingFrame")
 EggScrollFrame.Size = UDim2.new(1, 0, 0, 200)
 EggScrollFrame.BackgroundTransparency = 1
@@ -403,4 +396,4 @@ task.spawn(function()
     end
 end)
 
-print("✅ Auto Farming Tab Loaded")
+ToggleCheckEgg()
