@@ -1,13 +1,3 @@
--- ==================================================
--- YOKUDO HUB | FEATURE | VIPTP (AFK Farm Only)
--- ដាច់ដោយឡែកសម្រាប់ AFK Farm
--- Speed កំណត់ក្នុង file ខ្លួនឯង
--- Method: InstantTeleport (Fixed)
--- Fly Speed: 1000 | Return Speed: 800 | Fly Offset: 15
--- ✅ Register ជាមួយ CharacterSystem
--- ✅ Auto Callback ទៅ FarmingManager ពេល AutoStop
--- ==================================================
-
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -15,9 +5,6 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Player = Players.LocalPlayer
 local Container = workspace:WaitForChild("AreaEggSlotsClient")
 
--- ==================================================
--- REMOTES
--- ==================================================
 local CollectEvent = nil
 local ForestStrike = nil
 
@@ -30,22 +17,16 @@ pcall(function()
 end)
 
 if not CollectEvent then
-    warn("[VIPTP] CollectEvent not found")
     return
 end
 
-print("[VIPTP] CollectEvent OK")
-
--- ==================================================
--- SETTINGS (កំណត់ក្នុង file ខ្លួនឯង)
--- ==================================================
 local TARGET_UID = nil
 local SAFE_ZONE = Vector3.new(533, 70, -366)
 
-local FLY_SPEED = 1000        -- Fixed
-local RETURN_SPEED = 800      -- Fixed
-local FLY_OFFSET = 15         -- Fixed
-local CurrentMethod = "InstantTeleport"  -- Fixed
+local FLY_SPEED = 1000
+local RETURN_SPEED = 800
+local FLY_OFFSET = 15
+local CurrentMethod = "InstantTeleport"
 
 local SHOT_DISTANCE = 15
 local LOCK_ABOVE = 1
@@ -64,16 +45,10 @@ local LOCK_POSITION = Vector3.new(
     -326.8830261230469
 )
 
--- ==================================================
--- RAGDOLL BYPASS
--- ==================================================
 local RagdollEnabled = false
 local RagdollConnection = nil
 local ForceUpConnection = nil
 
--- ==================================================
--- STATE
--- ==================================================
 local Running = false
 local CurrentStep = "idle"
 local CurrentMode = "none"
@@ -104,9 +79,6 @@ local SavedJumpPower = nil
 local SavedJumpHeight = nil
 local SavedUseJumpPower = nil
 
--- ==================================================
--- GET HUMANOID
--- ==================================================
 local function GetHumanoid()
     local Char = Player.Character
     if not Char then return nil, nil end
@@ -115,9 +87,6 @@ local function GetHumanoid()
     return Hum, Root
 end
 
--- ==================================================
--- RAGDOLL BYPASS
--- ==================================================
 local function ForceUp()
     local Hum, Root = GetHumanoid()
     if not Hum or not Root then return end
@@ -183,8 +152,6 @@ local function EnableRagdollBypass()
             CleanupRagdollConstraints()
         end
     end)
-
-    print("[VIPTP] Ragdoll Bypass: ON")
 end
 
 local function DisableRagdollBypass()
@@ -195,13 +162,8 @@ local function DisableRagdollBypass()
         RagdollConnection:Disconnect()
         RagdollConnection = nil
     end
-
-    print("[VIPTP] Ragdoll Bypass: OFF")
 end
 
--- ==================================================
--- SAVE / RESTORE STATS
--- ==================================================
 local function SaveStats()
     local Hum = GetHumanoid()
     if not Hum then return end
@@ -222,9 +184,6 @@ local function RestoreStats()
     if SavedUseJumpPower ~= nil then pcall(function() Hum.UseJumpPower = SavedUseJumpPower end) end
 end
 
--- ==================================================
--- CLEANUP
--- ==================================================
 local function CleanupMovers()
     if FlyConnection then
         FlyConnection:Disconnect()
@@ -274,9 +233,6 @@ local function CleanupMovers()
     end
 end
 
--- ==================================================
--- LOCK AT TARGET (Y+1)
--- ==================================================
 local function StartLock(TargetPosition)
     TargetLockedCFrame = CFrame.new(TargetPosition + Vector3.new(0, LOCK_ABOVE, 0))
 
@@ -299,9 +255,6 @@ local function StartLock(TargetPosition)
     end)
 end
 
--- ==================================================
--- GET POSITION
--- ==================================================
 local function GetPosition(Object)
     if not Object then return nil end
     if Object:IsA("Model") then
@@ -317,9 +270,6 @@ local function GetPosition(Object)
     return nil
 end
 
--- ==================================================
--- SEARCH FIRST EGGS
--- ==================================================
 local function SearchFirstEggs()
     FirstEggList = {}
     if not Container then return end
@@ -365,9 +315,6 @@ local function FindClosestEgg()
     return Closest
 end
 
--- ==================================================
--- FLY TP
--- ==================================================
 local function FlyTP(Destination, Speed, UseShotTP, IsSafeZone, Callback)
     CleanupMovers()
 
@@ -471,9 +418,6 @@ local function FlyTP(Destination, Speed, UseShotTP, IsSafeZone, Callback)
     end)
 end
 
--- ==================================================
--- INSTANT FLY TP
--- ==================================================
 local function InstantFlyTP(Destination, Callback)
     CleanupMovers()
 
@@ -492,17 +436,10 @@ local function InstantFlyTP(Destination, Callback)
     if Callback then Callback() end
 end
 
--- ==================================================
--- TELEPORT TO TARGET (Instant Only)
--- ==================================================
 local function TeleportToTarget(TargetPos, Callback)
-    print("[VIPTP] Instant TP to Target")
     InstantFlyTP(TargetPos, Callback)
 end
 
--- ==================================================
--- REMOTE COLLECT
--- ==================================================
 local function RemoteCollectFirst()
     if not CollectEvent or not FirstEggSlotKey or not FirstEggUid then return false end
     local success = pcall(function()
@@ -524,9 +461,6 @@ local function RemoteCollectTarget()
     return success
 end
 
--- ==================================================
--- FIRE FOREST STRIKE
--- ==================================================
 local function FireForestStrike()
     if RemotesFired then return end
     RemotesFired = true
@@ -547,13 +481,8 @@ local function FireForestStrike()
             CleanupRagdollConstraints()
         end
     end)
-
-    print("[VIPTP] ForestStrike Fired")
 end
 
--- ==================================================
--- CHECK EGG
--- ==================================================
 local function IsFirstEggInWorkspace()
     if not FirstEggUid then return false end
     return workspace:FindFirstChild(FirstEggUid) ~= nil
@@ -575,9 +504,6 @@ local function IsTargetInWorkspace()
     return workspace:FindFirstChild(TARGET_UID) ~= nil
 end
 
--- ==================================================
--- AUTO STOP (កែ — បន្ថែម Callback)
--- ==================================================
 local function AutoStop()
     Running = false
     CurrentStep = "done"
@@ -587,9 +513,6 @@ local function AutoStop()
     StopActiveHeartbeat()
     RestoreStats()
 
-    print("[VIPTP] Auto Stop")
-
-    -- ✅ ហៅ Callback ទៅ FarmingManager
     if _G.YOKUDO_FarmingManager and _G.YOKUDO_FarmingManager.OnVIPTPComplete then
         task.spawn(function()
             task.wait(0.5)
@@ -598,9 +521,6 @@ local function AutoStop()
     end
 end
 
--- ==================================================
--- FLY TO TARGET
--- ==================================================
 local function StartFlyToTarget()
     if FlyTargetStarted then return end
     FlyTargetStarted = true
@@ -636,22 +556,14 @@ local function StartFlyToTarget()
     end)
 end
 
--- ==================================================
--- FLY TO SAFE (NO SHOT TP)
--- ==================================================
 local function FlyToSafeZone()
     CurrentStep = "to_safe"
-
-    print("[VIPTP] FlyTP to Safe Zone")
 
     FlyTP(SAFE_ZONE, RETURN_SPEED, false, true, function()
         AutoStop()
     end)
 end
 
--- ==================================================
--- HEARTBEAT
--- ==================================================
 local function StartActiveHeartbeat()
     if ActiveHeartbeat then
         ActiveHeartbeat:Disconnect()
@@ -735,9 +647,6 @@ local function StopActiveHeartbeat()
     end
 end
 
--- ==================================================
--- MAIN PROCESS
--- ==================================================
 local function StartProcess()
     Running = true
     CurrentStep = "search"
@@ -754,17 +663,14 @@ local function StartProcess()
     SaveStats()
     EnableRagdollBypass()
 
-    -- ✅ Auto Detect Option (spawn or workspace)
     if IsTargetInContainer() then
         CurrentMode = "spawn"
-        print("[VIPTP] Target found in Container → spawn mode")
     elseif IsTargetInWorkspace() then
         CurrentMode = "workspace"
         local WSEgg = workspace:FindFirstChild(TARGET_UID)
         if WSEgg then
             SavedTargetPosition = GetPosition(WSEgg)
         end
-        print("[VIPTP] Target found in Workspace → workspace mode")
     else
         local WaitTime = 0
         while Running and not IsTargetInContainer() and not IsTargetInWorkspace() do
@@ -811,15 +717,11 @@ local function StartProcess()
 
     StartActiveHeartbeat()
 
-    print("[VIPTP] FlyTP to First Egg (Shot TP)")
     FlyTP(EggPos, FLY_SPEED, true, false, function()
         CurrentStep = "collect_first"
     end)
 end
 
--- ==================================================
--- FULL RESET
--- ==================================================
 local function FullReset()
     Running = false
     CurrentStep = "idle"
@@ -845,9 +747,6 @@ local function FullReset()
     print("[VIPTP] Full Reset")
 end
 
--- ==================================================
--- ENABLE / DISABLE / SET
--- ==================================================
 local function Enable()
     if Running then return end
     if not CollectEvent then warn("[VIPTP] CollectEvent not found") return end
@@ -855,23 +754,16 @@ local function Enable()
 
     FullReset()
     StartProcess()
-
-    print("[VIPTP] ON | Target: " .. tostring(TARGET_UID))
 end
 
 local function Disable()
     FullReset()
-    print("[VIPTP] OFF")
 end
 
 local function SetTargetId(Id)
     TARGET_UID = Id
-    print("[VIPTP] Target ID: " .. tostring(Id))
 end
 
--- ==================================================
--- EXPORT
--- ==================================================
 _G.YOKUDO_VIPTP = {
     Enable = Enable,
     Disable = Disable,
@@ -885,9 +777,6 @@ _G.YOKUDO_VIPTP = {
     SAFE_ZONE = SAFE_ZONE,
 }
 
--- ==================================================
--- REGISTER WITH CHARACTER SYSTEM
--- ==================================================
 if _G.YOKUDO_CharacterSystem then
     _G.YOKUDO_CharacterSystem:RegisterFeature({
         Name = "VIPTP",
@@ -910,5 +799,3 @@ if _G.YOKUDO_CharacterSystem then
         end
     })
 end
-
-print("✅ VIPTP Loaded (AFK Farm Only | Instant | Speed 1000/800 | Offset 15 | Callback)")
