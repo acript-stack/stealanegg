@@ -102,7 +102,11 @@ Main.Position = UDim2.new(
 )
 Main.BackgroundColor3 = Theme.Background
 Main.BorderSizePixel = 0
-Main.ClipsDescendants = true
+
+-- FIX:
+-- Do not clip the UIStroke at the rounded bottom corners.
+Main.ClipsDescendants = false
+
 Main.Active = true
 Main.Parent = ScreenGui
 
@@ -112,7 +116,7 @@ MainCorner.Parent = Main
 
 local MainBorder = Instance.new("UIStroke")
 MainBorder.Color = BorderBlue
-MainBorder.Thickness = 2.5
+MainBorder.Thickness = 2
 MainBorder.Transparency = 0
 MainBorder.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 MainBorder.Parent = Main
