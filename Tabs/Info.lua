@@ -10,7 +10,7 @@ local InfoTab, InfoPage = TabsManager:RegisterTab("Info", 1, "INFO")
 --==================================================
 -- INFO CONTENT
 --==================================================
-CreateSectionTitle(InfoPage, "YOKUDO HUB | Steal An Egg", 1)
+CreateSectionTitle(InfoPage, "YZZ HUB | Steal An Egg", 1)
 
 --==================================================
 -- TITLE: Join Group For Notification Update Script
@@ -18,7 +18,7 @@ CreateSectionTitle(InfoPage, "YOKUDO HUB | Steal An Egg", 1)
 local TitleLabel = Instance.new("TextLabel")
 TitleLabel.Size = UDim2.new(1, 0, 0, 26)
 TitleLabel.BackgroundTransparency = 1
-TitleLabel.Text = "Join Group For Notification Update Script"
+TitleLabel.Text = "Join Discord Server For Update Script"
 TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 TitleLabel.TextSize = 13
 TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -32,7 +32,7 @@ TitleLabel.Parent = InfoPage
 local GroupLabel = Instance.new("TextLabel")
 GroupLabel.Size = UDim2.new(1, 0, 0, 24)
 GroupLabel.BackgroundTransparency = 1
-GroupLabel.Text = "Group Discord"
+GroupLabel.Text = "Discord Server"
 GroupLabel.TextColor3 = Color3.fromRGB(200, 200, 220)
 GroupLabel.TextSize = 13
 GroupLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -47,7 +47,7 @@ local LinkBtn = Instance.new("TextButton")
 LinkBtn.Size = UDim2.new(1, 0, 0, 30)
 LinkBtn.BackgroundColor3 = Color3.fromRGB(28, 29, 42)
 LinkBtn.BorderSizePixel = 0
-LinkBtn.Text = "Link : https://discord.gg/aKeK6avatS"
+LinkBtn.Text = "Link: https://discord.gg/eER5yhJ4q8"
 LinkBtn.TextColor3 = Color3.fromRGB(120, 180, 255)
 LinkBtn.TextSize = 12
 LinkBtn.TextXAlignment = Enum.TextXAlignment.Left
@@ -78,7 +78,7 @@ local CopyBtn = Instance.new("TextButton")
 CopyBtn.Size = UDim2.new(0, 120, 0, 32)
 CopyBtn.BackgroundColor3 = Color3.fromRGB(88, 101, 242)
 CopyBtn.BorderSizePixel = 0
-CopyBtn.Text = "COPY LINK"
+CopyBtn.Text = "Copy Link"
 CopyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 CopyBtn.TextSize = 12
 CopyBtn.Font = Enum.Font.GothamBold
@@ -99,7 +99,7 @@ CopyStroke.Parent = CopyBtn
 -- ==================================================
 -- COPY FUNCTION
 -- ==================================================
-local DISCORD_LINK = "https://discord.gg/aKeK6avatS"
+local DISCORD_LINK = "https://discord.gg/eER5yhJ4q8"
 
 local function CopyDiscord()
     local Success = pcall(function()
@@ -107,25 +107,21 @@ local function CopyDiscord()
     end)
 
     if Success then
-        CopyBtn.Text = "COPIED!"
+        CopyBtn.Text = "Copied!"
         CopyBtn.BackgroundColor3 = Color3.fromRGB(40, 160, 60)
 
         task.delay(1.5, function()
-            CopyBtn.Text = "COPY LINK"
+            CopyBtn.Text = "Copy Link"
             CopyBtn.BackgroundColor3 = Color3.fromRGB(88, 101, 242)
         end)
-
-        print("[YOKUDO] Discord Link Copied: " .. DISCORD_LINK)
     else
-        CopyBtn.Text = "FAILED!"
+        CopyBtn.Text = "Failed!"
         CopyBtn.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
 
         task.delay(1.5, function()
-            CopyBtn.Text = "COPY LINK"
+            CopyBtn.Text = "Copu Link"
             CopyBtn.BackgroundColor3 = Color3.fromRGB(88, 101, 242)
         end)
-
-        warn("[YOKUDO] Failed to copy Discord link")
     end
 end
 
@@ -136,7 +132,7 @@ CopyBtn.MouseButton1Click:Connect(CopyDiscord)
 LinkBtn.MouseButton1Click:Connect(CopyDiscord)
 
 CopyBtn.MouseEnter:Connect(function()
-    if CopyBtn.Text == "COPY LINK" then
+    if CopyBtn.Text == "Copy Link" then
         TweenService:Create(CopyBtn, TweenInfo.new(0.15), {
             BackgroundColor3 = Color3.fromRGB(108, 121, 255)
         }):Play()
@@ -144,7 +140,7 @@ CopyBtn.MouseEnter:Connect(function()
 end)
 
 CopyBtn.MouseLeave:Connect(function()
-    if CopyBtn.Text == "COPY LINK" then
+    if CopyBtn.Text == "Copy Link" then
         TweenService:Create(CopyBtn, TweenInfo.new(0.15), {
             BackgroundColor3 = Color3.fromRGB(88, 101, 242)
         }):Play()
@@ -162,5 +158,3 @@ LinkBtn.MouseLeave:Connect(function()
         BackgroundColor3 = Color3.fromRGB(28, 29, 42)
     }):Play()
 end)
-
-print("✅ Info Tab Loaded")
