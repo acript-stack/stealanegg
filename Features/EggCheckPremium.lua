@@ -237,5 +237,3 @@ _G.YOKUDO_EggCheckPremium = {
     BuildMeshIdMap = BuildMeshIdMap,
     RARITY_PRIORITY = RARITY_PRIORITY
 }
-
-print("✅ EggCheckPremium Feature Loaded (Register)")
