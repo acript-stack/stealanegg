@@ -5,12 +5,12 @@
 local TabsManager = _G.YOKUDO_TabsManager
 local TweenService = game:GetService("TweenService")
 
-local AutoFarmingTab, AutoFarmingPage = TabsManager:RegisterTab("Auto Farming", 4, "AUTO_FARMING")
+local AutoFarmingTab, AutoFarmingPage = TabsManager:RegisterTab("Manual Steal", 4, "AUTO_FARMING")
 
 --==================================================
 -- CONTENT
 --==================================================
-CreateSectionTitle(AutoFarmingPage, "Auto Farming", 1)
+CreateSectionTitle(AutoFarmingPage, "Manual Steal", 1)
 
 --==================================================
 -- FEATURE 1: Click Get Egg
