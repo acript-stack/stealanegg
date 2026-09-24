@@ -1,7 +1,3 @@
--- ==================================================
--- YOKUDO HUB | NEW PROJECT | UI
--- ==================================================
-
 local Services = {
     Players = game:GetService("Players"),
     TweenService = game:GetService("TweenService"),
@@ -14,9 +10,6 @@ local Services = {
 local Settings = _G.YOKUDO
 local Theme = Settings.UI.Theme
 
--- ==================================================
--- GUI PARENT (gethui if available)
--- ==================================================
 local GuiParent = Services.CoreGui
 
 pcall(function()
@@ -26,7 +19,6 @@ pcall(function()
     end
 end)
 
--- Clean old instances
 pcall(function()
     local Old = GuiParent:FindFirstChild("YOKUDO_HUB")
     if Old then Old:Destroy() end
@@ -34,9 +26,6 @@ pcall(function()
     if OldToggle then OldToggle:Destroy() end
 end)
 
--- ==================================================
--- TOGGLE (Y icon)
--- ==================================================
 local ASSET_ID = Settings.AssetID
 Services.ContentProvider:PreloadAsync({ASSET_ID})
 
@@ -68,11 +57,8 @@ ToggleStroke.Thickness = 1.5
 ToggleStroke.Transparency = 0.2
 ToggleStroke.Parent = Toggle
 
--- ==================================================
--- MAIN UI
--- ==================================================
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "YOKUDO_HUB"
+ScreenGui.Name = "Player3"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -99,9 +85,6 @@ MainBorder.Thickness = 2
 MainBorder.Transparency = 0.1
 MainBorder.Parent = Main
 
--- ==================================================
--- TOP BAR
--- ==================================================
 local TopBar = Instance.new("Frame")
 TopBar.Name = "TopBar"
 TopBar.Size = UDim2.new(1, 0, 0, 58)
@@ -154,9 +137,6 @@ Subtitle.Font = Enum.Font.GothamMedium
 Subtitle.ZIndex = 21
 Subtitle.Parent = TopBar
 
--- ==================================================
--- SIDEBAR
--- ==================================================
 local Sidebar = Instance.new("Frame")
 Sidebar.Name = "Sidebar"
 Sidebar.Size = UDim2.new(0, Settings.UI.SidebarWidth, 1, -58)
@@ -202,9 +182,6 @@ TabList.Padding = UDim.new(0, 2)
 TabList.SortOrder = Enum.SortOrder.LayoutOrder
 TabList.Parent = TabScroll
 
--- ==================================================
--- CONTENT
--- ==================================================
 local Content = Instance.new("Frame")
 Content.Name = "Content"
 Content.Size = UDim2.new(1, -Settings.UI.SidebarWidth, 1, -58)
@@ -214,9 +191,6 @@ Content.BorderSizePixel = 0
 Content.ZIndex = 5
 Content.Parent = Main
 
--- ==================================================
--- EXPORT
--- ==================================================
 _G.YOKUDO_Main = Main
 _G.YOKUDO_TopBar = TopBar
 _G.YOKUDO_Sidebar = Sidebar
@@ -226,9 +200,6 @@ _G.YOKUDO_ScreenGui = ScreenGui
 _G.YOKUDO_Toggle = Toggle
 _G.YOKUDO_GuiParent = GuiParent
 
--- ==================================================
--- DRAG SYSTEM (Main)
--- ==================================================
 local Dragging = false
 local DragStart = nil
 local StartPosition = nil
@@ -314,9 +285,6 @@ Services.UserInputService.InputEnded:Connect(function(Input)
     end
 end)
 
--- ==================================================
--- DRAG SYSTEM (Toggle)
--- ==================================================
 local ToggleDragging = false
 local ToggleDragStart = nil
 local ToggleStartPos = nil
@@ -376,9 +344,6 @@ Services.UserInputService.InputEnded:Connect(function(Input)
     end
 end)
 
--- ==================================================
--- TOGGLE UI SHOW/HIDE
--- ==================================================
 local isUIVisible = true
 
 Toggle.MouseButton1Click:Connect(function()
@@ -393,5 +358,3 @@ Toggle.MouseButton1Click:Connect(function()
         Size = UDim2.new(0, 55, 0, 55)
     }):Play()
 end)
-
-print("✅ UI Loaded")
