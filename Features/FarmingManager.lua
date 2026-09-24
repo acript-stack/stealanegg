@@ -1,9 +1,3 @@
--- ==================================================
--- YOKUDO HUB | FEATURE | Farming Manager
--- ✅ SelfFlyTP ទៅ Safe Zone ប្រើ Speed 500
--- ✅ មិន Lock ពេលដល់ Safe Zone
--- ==================================================
-
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -11,9 +5,6 @@ local Workspace = game:GetService("Workspace")
 
 local Player = Players.LocalPlayer
 
--- ==================================================
--- AREA EGG CYCLE
--- ==================================================
 local AreaEggCycle = nil
 
 pcall(function()
@@ -24,24 +15,18 @@ if not AreaEggCycle then
     warn("[FarmingManager] AreaEggCycle not found! Using fallback.")
 end
 
--- ==================================================
--- FIXED SETTINGS
--- ==================================================
 local NIGHT_CHECK_INTERVAL = 0.05
 local DAY_CHECK_INTERVAL = 0.5
 local SAFE_ZONE = Vector3.new(533, 70, -366)
 local SAFE_ZONE_DIST = 5
 local SAFE_WAIT_AFTER_REACH = 5
 
-local FLY_SPEED = 1000       -- ✅ សម្រាប់ TeleportSystem
-local SAFE_FLY_SPEED = 500   -- ✅ សម្រាប់ Fly ទៅ Safe Zone (ថ្មី)
+local FLY_SPEED = 1000
+local SAFE_FLY_SPEED = 500
 local RETURN_SPEED = 800
 local FLY_OFFSET = 10
 local METHOD = "InstantTeleport"
 
--- ==================================================
--- STATE
--- ==================================================
 local FarmingEnabled = false
 local CurrentState = "IDLE"
 local CurrentPhase = "UNKNOWN"
@@ -105,9 +90,6 @@ local function CleanupFly()
     end
 end
 
--- ==================================================
--- ✅ SELF FLY TP (មាន Speed Parameter)
--- ==================================================
 local function SelfFlyTP(Destination, Speed, Callback)
     CleanupFly()
 
