@@ -3,7 +3,7 @@ _G.YOKUDO = {
     Version = "Tiktok : @robloxscrips5",
     Author = "Yuzuh",
 
-    AssetID = "rbxassetid://101352576986760",
+    AssetID = "rbxassetid://99473317610987",
 
     UI = {
         Width = 480,
