@@ -20,7 +20,7 @@ pcall(function()
 end)
 
 pcall(function()
-    local Old = GuiParent:FindFirstChild("YOKUDO_HUB")
+    local Old = GuiParent:FindFirstChild("Player3")
     if Old then Old:Destroy() end
     local OldToggle = GuiParent:FindFirstChild("ToggleGUI")
     if OldToggle then OldToggle:Destroy() end
