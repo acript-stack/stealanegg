@@ -1,6 +1,6 @@
 -- ==================================================
--- YZ HUB | FEATURE | Walk Speed
--- Register | CharacterSystem
+-- YOKUDO HUB | FEATURE | Walk Speed
+-- ✅ Register ជាមួយ CharacterSystem
 -- ==================================================
 
 local Players = game:GetService("Players")
@@ -79,6 +79,7 @@ local function SetWalkSpeedValue(Value)
     if WalkSpeedEnabled then
         ApplyWalkSpeed()
     end
+    print("[YOKUDO] Walk Speed Value: " .. WalkSpeedValue)
 end
 
 -- ==================================================
@@ -89,8 +90,10 @@ local function ToggleWalkSpeed()
     
     if WalkSpeedEnabled then
         StartWalkSpeed()
+        print("[YOKUDO] Walk Speed: ON (" .. WalkSpeedValue .. ")")
     else
         StopWalkSpeed()
+        print("[YOKUDO] Walk Speed: OFF")
     end
 end
 
@@ -100,6 +103,7 @@ end
 local function EnableWalkSpeed()
     WalkSpeedEnabled = true
     StartWalkSpeed()
+    print("[YOKUDO] Walk Speed: ON (" .. WalkSpeedValue .. ")")
 end
 
 local function DisableWalkSpeed()
@@ -120,25 +124,6 @@ _G.YOKUDO_WalkSpeed = {
     GetValue = function() return WalkSpeedValue end
 }
 
--- ==================================================
--- REGISTER WITH CHARACTER SYSTEM
--- ==================================================
-if _G.YOKUDO_CharacterSystem then
-    _G.YOKUDO_CharacterSystem:RegisterFeature({
-        Name = "WalkSpeed",
-        Enable = EnableWalkSpeed,
-        Disable = DisableWalkSpeed,
-        IsEnabled = function() return WalkSpeedEnabled end,
-        OnCharacterAdded = function(Char, Hum, Root)
-            if WalkSpeedEnabled then
-                task.wait(0.5)
-                if Hum then
-                    pcall(function()
-                        OriginalWalkSpeed = Hum.WalkSpeed
-                        Hum.WalkSpeed = WalkSpeedValue
-                    end)
-                end
-            end
-        end
-    })
-end
+
+
+print("✅ WalkSpeed Feature Loaded (Register)")
