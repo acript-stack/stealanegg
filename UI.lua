@@ -39,14 +39,21 @@ pcall(function()
     Services.ContentProvider:PreloadAsync({ASSET_ID})
 end)
 
-local BorderBlue = Color3.fromRGB(35, 125, 255)
-local BorderRed = Color3.fromRGB(255, 55, 85)
+--------------------------------------------------
+-- RED / BLUE BORDER
+--------------------------------------------------
 
-local BorderGradient = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, BorderBlue),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(120, 75, 255)),
-    ColorSequenceKeypoint.new(1, BorderRed)
+local BorderColors = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
+    ColorSequenceKeypoint.new(0.25, Color3.fromRGB(255, 0, 0)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 100, 255)),
+    ColorSequenceKeypoint.new(0.75, Color3.fromRGB(0, 100, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 0))
 })
+
+--------------------------------------------------
+-- TOGGLE GUI
+--------------------------------------------------
 
 local ToggleScreenGui = Instance.new("ScreenGui")
 ToggleScreenGui.Name = "ToggleGUI"
@@ -72,16 +79,38 @@ ToggleCorner.CornerRadius = UDim.new(0, 14)
 ToggleCorner.Parent = Toggle
 
 local ToggleStroke = Instance.new("UIStroke")
-ToggleStroke.Color = BorderBlue
 ToggleStroke.Thickness = 2
-ToggleStroke.Transparency = 0
-ToggleStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+ToggleStroke.Transparency = 0.05
+ToggleStroke.Color = Color3.fromRGB(255, 0, 0)
 ToggleStroke.Parent = Toggle
 
-local ToggleGradient = Instance.new("UIGradient")
-ToggleGradient.Color = BorderGradient
-ToggleGradient.Rotation = 0
-ToggleGradient.Parent = ToggleStroke
+local ToggleBorderGradient = Instance.new("UIGradient")
+ToggleBorderGradient.Color = BorderColors
+ToggleBorderGradient.Rotation = 0
+ToggleBorderGradient.Parent = ToggleStroke
+
+task.spawn(function()
+    while ToggleScreenGui.Parent do
+        local Tween = Services.TweenService:Create(
+            ToggleBorderGradient,
+            TweenInfo.new(
+                1.2,
+                Enum.EasingStyle.Linear,
+                Enum.EasingDirection.InOut
+            ),
+            {
+                Rotation = ToggleBorderGradient.Rotation + 360
+            }
+        )
+
+        Tween:Play()
+        Tween.Completed:Wait()
+    end
+end)
+
+--------------------------------------------------
+-- MAIN GUI
+--------------------------------------------------
 
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "Player3"
@@ -110,29 +139,49 @@ Main.Position = UDim2.new(
 Main.BackgroundColor3 = Theme.Background
 Main.BorderSizePixel = 0
 
--- Keep the stroke visible around the rounded corners.
-Main.ClipsDescendants = false
+-- Same method as the loading screen.
+Main.ClipsDescendants = true
 
 Main.Active = true
-Main.ZIndex = 1
 Main.Parent = ScreenGui
 
 local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 16)
+MainCorner.CornerRadius = UDim.new(0, 14)
 MainCorner.Parent = Main
 
 local MainBorder = Instance.new("UIStroke")
-MainBorder.Color = BorderBlue
 MainBorder.Thickness = 2
-MainBorder.Transparency = 0
-MainBorder.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-MainBorder.ZIndex = 100
+MainBorder.Transparency = 0.05
+MainBorder.Color = Color3.fromRGB(255, 0, 0)
 MainBorder.Parent = Main
 
 local MainBorderGradient = Instance.new("UIGradient")
-MainBorderGradient.Color = BorderGradient
+MainBorderGradient.Color = BorderColors
 MainBorderGradient.Rotation = 0
 MainBorderGradient.Parent = MainBorder
+
+task.spawn(function()
+    while ScreenGui.Parent do
+        local Tween = Services.TweenService:Create(
+            MainBorderGradient,
+            TweenInfo.new(
+                1.2,
+                Enum.EasingStyle.Linear,
+                Enum.EasingDirection.InOut
+            ),
+            {
+                Rotation = MainBorderGradient.Rotation + 360
+            }
+        )
+
+        Tween:Play()
+        Tween.Completed:Wait()
+    end
+end)
+
+--------------------------------------------------
+-- TOP BAR
+--------------------------------------------------
 
 local TopBar = Instance.new("Frame")
 TopBar.Name = "TopBar"
@@ -144,7 +193,7 @@ TopBar.ZIndex = 20
 TopBar.Parent = Main
 
 local TopCorner = Instance.new("UICorner")
-TopCorner.CornerRadius = UDim.new(0, 16)
+TopCorner.CornerRadius = UDim.new(0, 14)
 TopCorner.Parent = TopBar
 
 local TopGradient = Instance.new("UIGradient")
@@ -160,15 +209,35 @@ local TopLine = Instance.new("Frame")
 TopLine.Name = "TopLine"
 TopLine.Size = UDim2.new(1, 0, 0, 2)
 TopLine.Position = UDim2.new(0, 0, 1, -2)
-TopLine.BackgroundColor3 = BorderBlue
+TopLine.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 TopLine.BackgroundTransparency = 0
 TopLine.BorderSizePixel = 0
 TopLine.ZIndex = 22
 TopLine.Parent = TopBar
 
 local TopLineGradient = Instance.new("UIGradient")
-TopLineGradient.Color = BorderGradient
+TopLineGradient.Color = BorderColors
+TopLineGradient.Rotation = 0
 TopLineGradient.Parent = TopLine
+
+task.spawn(function()
+    while ScreenGui.Parent do
+        local Tween = Services.TweenService:Create(
+            TopLineGradient,
+            TweenInfo.new(
+                1.2,
+                Enum.EasingStyle.Linear,
+                Enum.EasingDirection.InOut
+            ),
+            {
+                Rotation = TopLineGradient.Rotation + 360
+            }
+        )
+
+        Tween:Play()
+        Tween.Completed:Wait()
+    end
+end)
 
 local Title = Instance.new("TextLabel")
 Title.Name = "Title"
@@ -196,6 +265,10 @@ Subtitle.Font = Enum.Font.GothamMedium
 Subtitle.ZIndex = 21
 Subtitle.Parent = TopBar
 
+--------------------------------------------------
+-- SIDEBAR
+--------------------------------------------------
+
 local Sidebar = Instance.new("Frame")
 Sidebar.Name = "Sidebar"
 Sidebar.Size = UDim2.new(
@@ -221,16 +294,35 @@ local SidebarLine = Instance.new("Frame")
 SidebarLine.Name = "SidebarLine"
 SidebarLine.Size = UDim2.new(0, 2, 1, 0)
 SidebarLine.Position = UDim2.new(1, -2, 0, 0)
-SidebarLine.BackgroundColor3 = BorderBlue
+SidebarLine.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 SidebarLine.BackgroundTransparency = 0
 SidebarLine.BorderSizePixel = 0
 SidebarLine.ZIndex = 6
 SidebarLine.Parent = Sidebar
 
 local SidebarLineGradient = Instance.new("UIGradient")
-SidebarLineGradient.Color = BorderGradient
+SidebarLineGradient.Color = BorderColors
 SidebarLineGradient.Rotation = 90
 SidebarLineGradient.Parent = SidebarLine
+
+task.spawn(function()
+    while ScreenGui.Parent do
+        local Tween = Services.TweenService:Create(
+            SidebarLineGradient,
+            TweenInfo.new(
+                1.2,
+                Enum.EasingStyle.Linear,
+                Enum.EasingDirection.InOut
+            ),
+            {
+                Rotation = SidebarLineGradient.Rotation + 360
+            }
+        )
+
+        Tween:Play()
+        Tween.Completed:Wait()
+    end
+end)
 
 local TabScroll = Instance.new("ScrollingFrame")
 TabScroll.Name = "TabScroll"
@@ -257,6 +349,10 @@ local TabList = Instance.new("UIListLayout")
 TabList.Padding = UDim.new(0, 2)
 TabList.SortOrder = Enum.SortOrder.LayoutOrder
 TabList.Parent = TabScroll
+
+--------------------------------------------------
+-- CONTENT
+--------------------------------------------------
 
 local Content = Instance.new("Frame")
 Content.Name = "Content"
@@ -289,7 +385,7 @@ _G.YOKUDO_Toggle = Toggle
 _G.YOKUDO_GuiParent = GuiParent
 
 --------------------------------------------------
--- DRAG SYSTEM
+-- DRAG
 --------------------------------------------------
 
 local Dragging = false
@@ -325,64 +421,6 @@ TopBar.InputBegan:Connect(function(Input)
         StartDrag(Input)
     end
 end)
-
---------------------------------------------------
--- INSET DRAG ZONES
--- These stay away from the UIStroke.
---------------------------------------------------
-
-local DragInset = 7
-
-local function CreateDragZone(Name, Position, Size)
-    local Zone = Instance.new("Frame")
-
-    Zone.Name = Name
-    Zone.Position = Position
-    Zone.Size = Size
-    Zone.BackgroundTransparency = 1
-    Zone.BorderSizePixel = 0
-    Zone.Active = true
-    Zone.ZIndex = 50
-    Zone.Parent = Main
-
-    Zone.InputBegan:Connect(function(Input)
-        if Input.UserInputType == Enum.UserInputType.MouseButton1
-            or Input.UserInputType == Enum.UserInputType.Touch then
-
-            StartDrag(Input)
-        end
-    end)
-
-    return Zone
-end
-
--- Top drag zone stays inside the border.
-CreateDragZone(
-    "DragTop",
-    UDim2.new(0, DragInset, 0, DragInset),
-    UDim2.new(1, -DragInset * 2, 0, 4)
-)
-
--- Bottom drag zone is inset from BOTH bottom corners.
-CreateDragZone(
-    "DragBottom",
-    UDim2.new(0, DragInset, 1, -DragInset - 4),
-    UDim2.new(1, -DragInset * 2, 0, 4)
-)
-
--- Left drag zone avoids rounded corners.
-CreateDragZone(
-    "DragLeft",
-    UDim2.new(0, DragInset, 0, DragInset + 16),
-    UDim2.new(0, 4, 1, -(DragInset * 2 + 32))
-)
-
--- Right drag zone avoids rounded corners.
-CreateDragZone(
-    "DragRight",
-    UDim2.new(1, -DragInset - 4, 0, DragInset + 16),
-    UDim2.new(0, 4, 1, -(DragInset * 2 + 32))
-)
 
 Services.UserInputService.InputChanged:Connect(function(Input)
     if not Dragging then
@@ -517,7 +555,7 @@ Services.UserInputService.InputEnded:Connect(function(Input)
 end)
 
 --------------------------------------------------
--- TOGGLE UI
+-- TOGGLE
 --------------------------------------------------
 
 local isUIVisible = true
