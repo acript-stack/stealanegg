@@ -93,21 +93,28 @@ ScreenGui.Parent = GuiParent
 
 local Main = Instance.new("Frame")
 Main.Name = "Main"
-Main.Size = UDim2.new(0, Settings.UI.Width, 0, Settings.UI.Height)
+Main.Size = UDim2.new(
+    0,
+    Settings.UI.Width,
+    0,
+    Settings.UI.Height
+)
+
 Main.Position = UDim2.new(
     0.5,
     -Settings.UI.Width / 2,
     0.5,
     -Settings.UI.Height / 2
 )
+
 Main.BackgroundColor3 = Theme.Background
 Main.BorderSizePixel = 0
 
--- FIX:
--- Do not clip the UIStroke at the rounded bottom corners.
+-- Keep the stroke visible around the rounded corners.
 Main.ClipsDescendants = false
 
 Main.Active = true
+Main.ZIndex = 1
 Main.Parent = ScreenGui
 
 local MainCorner = Instance.new("UICorner")
@@ -119,6 +126,7 @@ MainBorder.Color = BorderBlue
 MainBorder.Thickness = 2
 MainBorder.Transparency = 0
 MainBorder.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+MainBorder.ZIndex = 100
 MainBorder.Parent = Main
 
 local MainBorderGradient = Instance.new("UIGradient")
@@ -190,8 +198,20 @@ Subtitle.Parent = TopBar
 
 local Sidebar = Instance.new("Frame")
 Sidebar.Name = "Sidebar"
-Sidebar.Size = UDim2.new(0, Settings.UI.SidebarWidth, 1, -58)
-Sidebar.Position = UDim2.new(0, 0, 0, 58)
+Sidebar.Size = UDim2.new(
+    0,
+    Settings.UI.SidebarWidth,
+    1,
+    -58
+)
+
+Sidebar.Position = UDim2.new(
+    0,
+    0,
+    0,
+    58
+)
+
 Sidebar.BackgroundColor3 = Theme.Sidebar
 Sidebar.BorderSizePixel = 0
 Sidebar.ZIndex = 5
@@ -246,12 +266,14 @@ Content.Size = UDim2.new(
     1,
     -58
 )
+
 Content.Position = UDim2.new(
     0,
     Settings.UI.SidebarWidth,
     0,
     58
 )
+
 Content.BackgroundColor3 = Theme.Background
 Content.BorderSizePixel = 0
 Content.ZIndex = 5
@@ -265,6 +287,10 @@ _G.YOKUDO_Content = Content
 _G.YOKUDO_ScreenGui = ScreenGui
 _G.YOKUDO_Toggle = Toggle
 _G.YOKUDO_GuiParent = GuiParent
+
+--------------------------------------------------
+-- DRAG SYSTEM
+--------------------------------------------------
 
 local Dragging = false
 local DragStart = nil
@@ -300,6 +326,13 @@ TopBar.InputBegan:Connect(function(Input)
     end
 end)
 
+--------------------------------------------------
+-- INSET DRAG ZONES
+-- These stay away from the UIStroke.
+--------------------------------------------------
+
+local DragInset = 7
+
 local function CreateDragZone(Name, Position, Size)
     local Zone = Instance.new("Frame")
 
@@ -323,28 +356,32 @@ local function CreateDragZone(Name, Position, Size)
     return Zone
 end
 
+-- Top drag zone stays inside the border.
 CreateDragZone(
     "DragTop",
-    UDim2.new(0, 0, 0, 0),
-    UDim2.new(1, 0, 0, 5)
+    UDim2.new(0, DragInset, 0, DragInset),
+    UDim2.new(1, -DragInset * 2, 0, 4)
 )
 
+-- Bottom drag zone is inset from BOTH bottom corners.
 CreateDragZone(
     "DragBottom",
-    UDim2.new(0, 0, 1, -5),
-    UDim2.new(1, 0, 0, 5)
+    UDim2.new(0, DragInset, 1, -DragInset - 4),
+    UDim2.new(1, -DragInset * 2, 0, 4)
 )
 
+-- Left drag zone avoids rounded corners.
 CreateDragZone(
     "DragLeft",
-    UDim2.new(0, 0, 0, 0),
-    UDim2.new(0, 5, 1, 0)
+    UDim2.new(0, DragInset, 0, DragInset + 16),
+    UDim2.new(0, 4, 1, -(DragInset * 2 + 32))
 )
 
+-- Right drag zone avoids rounded corners.
 CreateDragZone(
     "DragRight",
-    UDim2.new(1, -5, 0, 0),
-    UDim2.new(0, 5, 1, 0)
+    UDim2.new(1, -DragInset - 4, 0, DragInset + 16),
+    UDim2.new(0, 4, 1, -(DragInset * 2 + 32))
 )
 
 Services.UserInputService.InputChanged:Connect(function(Input)
@@ -393,6 +430,10 @@ Services.UserInputService.InputEnded:Connect(function(Input)
         end
     end
 end)
+
+--------------------------------------------------
+-- TOGGLE DRAG
+--------------------------------------------------
 
 local ToggleDragging = false
 local ToggleDragStart = nil
@@ -474,6 +515,10 @@ Services.UserInputService.InputEnded:Connect(function(Input)
         end
     end
 end)
+
+--------------------------------------------------
+-- TOGGLE UI
+--------------------------------------------------
 
 local isUIVisible = true
 
