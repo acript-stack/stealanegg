@@ -2,11 +2,12 @@
 -- YOKUDO HUB - TELEPORT SYSTEM (DUAL MODE + DUAL OPTION + RECOVERY)
 -- First Egg: FlyTP (Shot TP 25, Offset 5, Speed 1000)
 -- Target Egg: FlyTP / Instant (Lock 1)
--- Safe Zone: FlyTP (No Shot TP, Offset 5, Speed 800)
--- ✅ Logic ចាស់ + កែកន្រាក់
+-- Safe Zone: FlyTP (No Shot TP, No Lock, Offset 5, Speed 800)
+-- Recovery: FlyTP ធម្មតា (No Shot TP) — កុំកន្រាក់
+-- ✅ Logic ចាស់ + កែកន្រាក់ (task.spawn + task.wait)
 -- ✅ DropHeldEgg Check
--- ✅ Auto Recovery ពេល Egg Drop (No Shot TP)
--- ✅ Safe Zone: Reset State + AutoStop
+-- ✅ Auto Recovery ពេល Egg Drop
+-- ✅ Safe Zone: Stop + Reset ភ្លាមៗ
 -- ✅ គ្មាន Callback ទៅ FarmingManager
 -- ✅ Fixed: Load Order (Forward Declaration)
 -- ==================================================
@@ -130,7 +131,7 @@ local SavedJumpHeight = nil
 local SavedUseJumpPower = nil
 
 -- ==================================================
--- ✅ FORWARD DECLARATIONS (ដោះស្រាយ Load Order)
+-- ✅ FORWARD DECLARATIONS
 -- ==================================================
 local CleanupMovers
 local DisableRagdollBypass
@@ -449,7 +450,7 @@ local function FindClosestEgg()
 end
 
 -- ==================================================
--- FLY TP (កែកន្រាក់ — Stop BodyV/G មុន TP)
+-- ✅ FLY TP (កែកន្រាក់ + Safe Zone មិន Lock + task.spawn)
 -- ==================================================
 local function FlyTP(Destination, Speed, UseShotTP, IsSafeZone, Callback)
     CleanupMovers()
@@ -459,13 +460,7 @@ local function FlyTP(Destination, Speed, UseShotTP, IsSafeZone, Callback)
     if Hum.Health <= 0 then return end
 
     local FlyPos = Vector3.new(Destination.X, Destination.Y + FLY_OFFSET, Destination.Z)
-
-    local LockCFrame
-    if IsSafeZone then
-        LockCFrame = CFrame.new(Destination)
-    else
-        LockCFrame = CFrame.new(Destination + Vector3.new(0, LOCK_ABOVE, 0))
-    end
+    local LockCFrame = CFrame.new(Destination + Vector3.new(0, LOCK_ABOVE, 0))
 
     Hum.PlatformStand = true
 
@@ -511,7 +506,7 @@ local function FlyTP(Destination, Speed, UseShotTP, IsSafeZone, Callback)
         local VertDist = math.abs(Direction.Y)
         local TotalDist = Direction.Magnitude
 
-        -- ✅ Safe Zone
+        -- ✅ Safe Zone (មិន Lock — Stop ភ្លាម)
         if IsSafeZone then
             if HorizDist <= SAFE_LOCK_DISTANCE then
                 if BodyVelocity then
@@ -522,22 +517,24 @@ local function FlyTP(Destination, Speed, UseShotTP, IsSafeZone, Callback)
                     BodyGyro.MaxTorque = Vector3.zero
                 end
 
-                task.wait(0.1)
+                -- ✅ ចេញពី Heartbeat មុន
+                task.spawn(function()
+                    task.wait(0.1)
 
-                CleanupMovers()
-                Root2.CFrame = LockCFrame
-                Root2.AssemblyLinearVelocity = Vector3.zero
-                Root2.AssemblyAngularVelocity = Vector3.zero
+                    CleanupMovers()
+                    Root2.CFrame = CFrame.new(Destination)
+                    Root2.AssemblyLinearVelocity = Vector3.zero
+                    Root2.AssemblyAngularVelocity = Vector3.zero
 
-                task.wait(0.1)
+                    task.wait(0.1)
 
-                StartLock(Destination)
-                if Callback then Callback() end
+                    if Callback then Callback() end
+                end)
                 return
             end
         end
 
-        -- ✅ Shot TP
+        -- ✅ Shot TP (First + Target)
         if not IsSafeZone and UseShotTP and not ShotDone and HorizDist <= SHOT_DISTANCE then
             ShotDone = true
 
@@ -549,17 +546,20 @@ local function FlyTP(Destination, Speed, UseShotTP, IsSafeZone, Callback)
                 BodyGyro.MaxTorque = Vector3.zero
             end
 
-            task.wait(0.1)
+            -- ✅ ចេញពី Heartbeat មុន TP
+            task.spawn(function()
+                task.wait(0.1)
 
-            CleanupMovers()
-            Root2.CFrame = LockCFrame
-            Root2.AssemblyLinearVelocity = Vector3.zero
-            Root2.AssemblyAngularVelocity = Vector3.zero
+                CleanupMovers()
+                Root2.CFrame = LockCFrame
+                Root2.AssemblyLinearVelocity = Vector3.zero
+                Root2.AssemblyAngularVelocity = Vector3.zero
 
-            task.wait(0.1)
+                task.wait(0.1)
 
-            StartLock(Destination)
-            if Callback then Callback() end
+                StartLock(Destination)
+                if Callback then Callback() end
+            end)
             return
         end
 
@@ -573,17 +573,19 @@ local function FlyTP(Destination, Speed, UseShotTP, IsSafeZone, Callback)
                 BodyGyro.MaxTorque = Vector3.zero
             end
 
-            task.wait(0.1)
+            task.spawn(function()
+                task.wait(0.1)
 
-            CleanupMovers()
-            Root2.CFrame = LockCFrame
-            Root2.AssemblyLinearVelocity = Vector3.zero
-            Root2.AssemblyAngularVelocity = Vector3.zero
+                CleanupMovers()
+                Root2.CFrame = LockCFrame
+                Root2.AssemblyLinearVelocity = Vector3.zero
+                Root2.AssemblyAngularVelocity = Vector3.zero
 
-            task.wait(0.1)
+                task.wait(0.1)
 
-            StartLock(Destination)
-            if Callback then Callback() end
+                StartLock(Destination)
+                if Callback then Callback() end
+            end)
             return
         end
 
@@ -622,15 +624,16 @@ local function InstantFlyTP(Destination, Callback)
 
     local LockCFrame = CFrame.new(Destination + Vector3.new(0, LOCK_ABOVE, 0))
 
-    Root.CFrame = LockCFrame
-    Root.AssemblyLinearVelocity = Vector3.zero
-    Root.AssemblyAngularVelocity = Vector3.zero
+    task.spawn(function()
+        Root.CFrame = LockCFrame
+        Root.AssemblyLinearVelocity = Vector3.zero
+        Root.AssemblyAngularVelocity = Vector3.zero
 
-    task.wait(0.1)
+        task.wait(0.1)
 
-    StartLock(Destination)
-
-    if Callback then Callback() end
+        StartLock(Destination)
+        if Callback then Callback() end
+    end)
 end
 
 -- ==================================================
@@ -722,7 +725,7 @@ local function IsTargetInWorkspace()
 end
 
 -- ==================================================
--- AUTO STOP (គ្មាន Callback — Fixed Load Order)
+-- ✅ AUTO STOP (Stop + Reset ភ្លាមៗ)
 -- ==================================================
 AutoStop = function()
     Running = false
@@ -750,15 +753,14 @@ AutoStop = function()
         end)
     end
 
-    task.wait(0.2)
+    task.wait(0.1)
 
-    -- ✅ ហៅ Function តាម Forward Declaration
     CleanupMovers()
     DisableRagdollBypass()
     StopActiveHeartbeat()
     RestoreStats()
 
-    -- ✅ Reset State
+    -- ✅ Reset State ទាំងអស់
     FirstEggList = {}
     FirstEggUid = nil
     FirstEggSlotKey = nil
@@ -820,7 +822,7 @@ StartFlyToTarget = function()
 end
 
 -- ==================================================
--- ✅ FLY TO TARGET AGAIN (Recovery — No Shot TP)
+-- ✅ FLY TO TARGET AGAIN (Recovery — FlyTP ធម្មតា មិន Shot TP)
 -- ==================================================
 FlyToTargetAgain = function()
     RecoveryAttempts = RecoveryAttempts + 1
@@ -861,6 +863,8 @@ FlyToTargetAgain = function()
         return
     end
 
+    -- ✅ FlyTP ធម្មតា (No Shot TP) ទៅ Target Egg
+    print("[YOKUDO] Recovery FlyTP (No Shot) to Target")
     FlyTP(TargetPos, FLY_SPEED, false, false, function()
         print("[YOKUDO] ✅ Recovery #" .. RecoveryAttempts .. " Arrived → collect_target")
 
@@ -876,7 +880,7 @@ FlyToTargetAgain = function()
 end
 
 -- ==================================================
--- FLY TO SAFE ZONE
+-- ✅ FLY TO SAFE ZONE (Stop + Reset ភ្លាមៗ)
 -- ==================================================
 FlyToSafeZone = function()
     CurrentStep = "to_safe"
@@ -896,14 +900,15 @@ FlyToSafeZone = function()
         RecoveryAttempts = 0
         SavedTargetPosition = nil
 
-        task.wait(0.2)
-
-        AutoStop()
+        task.spawn(function()
+            task.wait(0.2)
+            AutoStop()
+        end)
     end)
 end
 
 -- ==================================================
--- ✅ STOP ACTIVE HEARTBEAT (Forward Declaration)
+-- STOP ACTIVE HEARTBEAT
 -- ==================================================
 StopActiveHeartbeat = function()
     if ActiveHeartbeat then
@@ -966,7 +971,6 @@ StartActiveHeartbeat = function()
         -- Step 3: Collect Target Egg
         if CurrentStep == "collect_target" and not TargetCollected then
 
-            -- ✅ DropHeldEgg Check
             if IsTargetCollectedByDropHeldEgg() then
                 print("[YOKUDO] ✅ DropHeldEgg.Enabled = true → Target Collected!")
                 TargetCollected = true
@@ -977,7 +981,6 @@ StartActiveHeartbeat = function()
                 return
             end
 
-            -- ✅ Mode ដើម
             if CurrentMode == "spawn" then
                 if workspace:FindFirstChild(TARGET_UID) then
                     TargetCollected = true
@@ -1007,14 +1010,12 @@ StartActiveHeartbeat = function()
                 end
             end
 
-            -- ✅ បន្ត Collect
             if tick() - CollectTime > COLLECT_INTERVAL then
                 CollectTime = tick()
                 RemoteCollectTarget()
                 CollectAttempts = CollectAttempts + 1
             end
 
-            -- ✅ Timeout → Recovery
             if tick() - TargetCollectStartTime > TARGET_COLLECT_TIMEOUT then
                 print("[YOKUDO] ⚠️ Target Collect Timeout → Recovery")
                 if not RecoveryTriggered then
@@ -1238,4 +1239,4 @@ _G.YOKUDO_TeleportSystem = {
     GetTargetId = function() return TARGET_UID end
 }
 
-print("✅ TeleportSystem Loaded (Logic ចាស់ + កែកន្រាក់ + DropHeldEgg + Recovery + Fixed Load Order)")
+print("✅ TeleportSystem Loaded (Logic ចាស់ + កែកន្រាក់ + DropHeldEgg + Recovery + Safe Zone No Lock + AutoStop)")
