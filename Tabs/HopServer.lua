@@ -2,8 +2,10 @@ local TabsManager = _G.YOKUDO_TabsManager
 local TweenService = game:GetService("TweenService")
 local HttpService = game:GetService("HttpService")
 local TeleportService = game:GetService("TeleportService")
+local Players = game:GetService("Players")
 
 local PLACE_ID = 107778070777162
+local LocalPlayer = Players.LocalPlayer
 
 local HopServerTab, HopServerPage = TabsManager:RegisterTab("Hop Server", 6, "HOP_SERVER")
 
@@ -41,7 +43,7 @@ local FeatureStatus = Instance.new("TextLabel")
 FeatureStatus.Size = UDim2.new(1, -100, 0, 16)
 FeatureStatus.Position = UDim2.new(0, 12, 0, 32)
 FeatureStatus.BackgroundTransparency = 1
-FeatureStatus.Text = "Click to auto join a 1-player server"
+FeatureStatus.Text = "Click to search servers"
 FeatureStatus.TextColor3 = Color3.fromRGB(150, 150, 170)
 FeatureStatus.TextSize = 10
 FeatureStatus.TextXAlignment = Enum.TextXAlignment.Left
@@ -190,10 +192,13 @@ local function CreateEntry(index, server)
         FeatureStatus.TextColor3 = Color3.fromRGB(0, 255, 105)
 
         local success, err = pcall(function()
-            TeleportService:TeleportToPlaceInstance(
+            local options = Instance.new("TeleportOptions")
+            options.ServerInstanceId = server.id
+
+            TeleportService:TeleportAsync(
                 PLACE_ID,
-                server.id,
-                game.Players.LocalPlayer
+                {LocalPlayer},
+                options
             )
         end)
 
@@ -229,8 +234,9 @@ local function FetchServers()
         end
 
         for _, server in ipairs(response.data) do
-            if server.playing == 1
+            if server.id
                 and server.id ~= game.JobId
+                and server.playing == 1
                 and server.maxPlayers > 1
                 and server.playing < server.maxPlayers
                 and not seen[server.id] then
@@ -241,7 +247,10 @@ local function FetchServers()
         end
 
         cursor = response.next_cursor or ""
-        task.wait(0.15)
+
+        if cursor ~= "" then
+            task.wait(0.15)
+        end
 
     until cursor == "" or pageCount >= maxPages
 
@@ -264,16 +273,23 @@ local function AutoJoinServer()
         return a.id < b.id
     end)
 
-    local server = servers[1]
+    for i, server in ipairs(servers) do
+        CreateEntry(i, server)
+    end
+
+    local targetServer = servers[1]
 
     FeatureStatus.Text = "Joining 1-player server..."
     FeatureStatus.TextColor3 = Color3.fromRGB(0, 255, 105)
 
+    local options = Instance.new("TeleportOptions")
+    options.ServerInstanceId = targetServer.id
+
     local success, err = pcall(function()
-        TeleportService:TeleportToPlaceInstance(
+        TeleportService:TeleportAsync(
             PLACE_ID,
-            server.id,
-            game.Players.LocalPlayer
+            {LocalPlayer},
+            options
         )
     end)
 
