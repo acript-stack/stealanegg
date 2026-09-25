@@ -192,13 +192,10 @@ local function CreateEntry(index, server)
         FeatureStatus.TextColor3 = Color3.fromRGB(0, 255, 105)
 
         local success, err = pcall(function()
-            local options = Instance.new("TeleportOptions")
-            options.ServerInstanceId = server.id
-
-            TeleportService:TeleportAsync(
+            TeleportService:TeleportToPlaceInstance(
                 PLACE_ID,
-                {LocalPlayer},
-                options
+                server.id,
+                LocalPlayer
             )
         end)
 
@@ -217,7 +214,7 @@ local function FetchServers()
     local maxPages = 5
 
     repeat
-        pageCount = pageCount + 1
+        pageCount += 1
 
         local url = string.format(
             "https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Asc&limit=100&cursor=%s",
@@ -257,15 +254,43 @@ local function FetchServers()
     return allServers
 end
 
-local function AutoJoinServer()
-    FeatureStatus.Text = "Searching for 1-player server..."
+local function AutoJoinServers(servers)
+    for index, server in ipairs(servers) do
+        FeatureStatus.Text = "Joining server " .. index .. "/" .. #servers .. "..."
+        FeatureStatus.TextColor3 = Color3.fromRGB(0, 255, 105)
+
+        local success = pcall(function()
+            TeleportService:TeleportToPlaceInstance(
+                PLACE_ID,
+                server.id,
+                LocalPlayer
+            )
+        end)
+
+        if success then
+            return
+        end
+
+        task.wait(0.5)
+    end
+
+    FeatureStatus.Text = "Unable to join found servers."
+    FeatureStatus.TextColor3 = Color3.fromRGB(255, 0, 0)
+end
+
+ClickBtn.MouseButton1Click:Connect(function()
+    ClickBtn.Active = false
+    FeatureStatus.Text = "Searching fresh servers..."
     FeatureStatus.TextColor3 = Color3.fromRGB(150, 150, 170)
+
+    ClearList()
 
     local servers = FetchServers()
 
     if #servers == 0 then
-        FeatureStatus.Text = "No 1-player server found."
+        FeatureStatus.Text = "No servers with 1 player found."
         FeatureStatus.TextColor3 = Color3.fromRGB(255, 0, 0)
+        ClickBtn.Active = true
         return
     end
 
@@ -277,29 +302,5 @@ local function AutoJoinServer()
         CreateEntry(i, server)
     end
 
-    local targetServer = servers[1]
-
-    FeatureStatus.Text = "Joining 1-player server..."
-    FeatureStatus.TextColor3 = Color3.fromRGB(0, 255, 105)
-
-    local options = Instance.new("TeleportOptions")
-    options.ServerInstanceId = targetServer.id
-
-    local success, err = pcall(function()
-        TeleportService:TeleportAsync(
-            PLACE_ID,
-            {LocalPlayer},
-            options
-        )
-    end)
-
-    if not success then
-        FeatureStatus.Text = "Failed: " .. tostring(err)
-        FeatureStatus.TextColor3 = Color3.fromRGB(255, 0, 0)
-    end
-end
-
-ClickBtn.MouseButton1Click:Connect(function()
-    ClearList()
-    AutoJoinServer()
+    AutoJoinServers(servers)
 end)
