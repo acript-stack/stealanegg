@@ -1,3 +1,9 @@
+-- ==================================================
+-- YOKUDO HUB | FEATURE | Egg Check Premium
+-- ជ្រើសរើស Egg តាម Rarity (Divine > Eternal > Secret) និង $/s
+-- ✅ Register ជាមួយ CharacterSystem
+-- ==================================================
+
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -231,3 +237,5 @@ _G.YOKUDO_EggCheckPremium = {
     BuildMeshIdMap = BuildMeshIdMap,
     RARITY_PRIORITY = RARITY_PRIORITY
 }
+
+print("✅ EggCheckPremium Feature Loaded (Register)")
