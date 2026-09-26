@@ -193,7 +193,7 @@ TopBar.ZIndex = 20
 TopBar.Parent = Main
 
 local TopCorner = Instance.new("UICorner")
-TopCorner.CornerRadius = UDim.new(0, 14)
+TopCorner.CornerRadius = UDim.new(0, 3)
 TopCorner.Parent = TopBar
 
 local TopGradient = Instance.new("UIGradient")
