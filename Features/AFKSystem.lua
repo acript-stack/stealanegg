@@ -327,3 +327,5 @@ _G.YOKUDO_AFKSystem = {
     IsFlying = function() return IsFlying end,
     SAFE_ZONE = SAFE_ZONE,
 }
+
+print("✅ AFKSystem Feature Loaded (Fly Normal + Stop + Reset + Register)")
