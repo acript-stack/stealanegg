@@ -5,7 +5,10 @@
 -- ហៅ AFKSystem ពេលអត់ឃើញ Egg
 -- ហៅ VIPTP ពេលឃើញ Egg + Day
 -- Night Check: 0.05s | Day Check: 0.5s
+-- ✅ ដក GetHumanoid — ប្រើ GetChar/GetRoot/GetHum
+-- ✅ ដក Register — មិន Register ជាមួយ CharacterSystem
 -- ✅ Callback ពី VIPTP ពេល AutoStop
+-- ✅ Fixed: ត្រឡប់ទៅ AFK ពេល VIPTP ចប់ + អត់ឃើញ Egg
 -- ==================================================
 
 local Players = game:GetService("Players")
@@ -32,7 +35,7 @@ end
 -- SETTINGS
 -- ==================================================
 local NIGHT_CHECK_INTERVAL = 0.05
-local DAY_CHECK_INTERVAL = 0.5
+local DAY_CHECK_INTERVAL = 0.10
 local SAFE_ZONE = Vector3.new(533, 70, -366)
 local SAFE_ZONE_DIST = 5
 local SAFE_WAIT_AFTER_REACH = 1
@@ -190,14 +193,22 @@ local BodyVelocity = nil
 local BodyGyro = nil
 
 -- ==================================================
--- GET HUMANOID
+-- ✅ GET CHAR / ROOT / HUM (ដក GetHumanoid ចេញ)
 -- ==================================================
-local function GetHumanoid()
-    local Char = Player.Character
-    if not Char then return nil, nil end
-    local Hum = Char:FindFirstChildOfClass("Humanoid")
-    local Root = Char:FindFirstChild("HumanoidRootPart")
-    return Hum, Root
+local function GetChar()
+    return Player.Character
+end
+
+local function GetRoot()
+    local Char = GetChar()
+    if not Char then return nil end
+    return Char:FindFirstChild("HumanoidRootPart")
+end
+
+local function GetHum()
+    local Char = GetChar()
+    if not Char then return nil end
+    return Char:FindFirstChildOfClass("Humanoid")
 end
 
 -- ==================================================
@@ -221,7 +232,8 @@ local function CleanupFly()
         BodyGyro:Destroy()
         BodyGyro = nil
     end
-    local Hum, Root = GetHumanoid()
+    local Hum = GetHum()
+    local Root = GetRoot()
     if Hum then
         pcall(function()
             Hum.PlatformStand = false
@@ -242,7 +254,8 @@ end
 local function SelfFlyTP(Destination, Speed, Callback)
     CleanupFly()
 
-    local Hum, Root = GetHumanoid()
+    local Hum = GetHum()
+    local Root = GetRoot()
     if not Hum or not Root then
         if Callback then Callback() end
         return
@@ -277,7 +290,8 @@ local function SelfFlyTP(Destination, Speed, Callback)
             return
         end
 
-        local Hum2, Root2 = GetHumanoid()
+        local Hum2 = GetHum()
+        local Root2 = GetRoot()
         if not Hum2 or not Root2 then
             CleanupFly()
             return
@@ -387,7 +401,7 @@ end
 -- FLY TO SAFE ZONE AND WAIT
 -- ==================================================
 local function FlyToSafeZoneAndWait()
-    local Hum, Root = GetHumanoid()
+    local Root = GetRoot()
     if not Root then return false end
 
     local DistToSafe = (Root.Position - SAFE_ZONE).Magnitude
@@ -405,7 +419,7 @@ local function FlyToSafeZoneAndWait()
 
     local WaitTime = 0
     while FarmingEnabled and WaitTime < 10 do
-        local Hum2, Root2 = GetHumanoid()
+        local Root2 = GetRoot()
         if Root2 then
             local Dist = (Root2.Position - SAFE_ZONE).Magnitude
             if Dist <= SAFE_ZONE_DIST then
@@ -440,22 +454,22 @@ end
 
 -- ==================================================
 -- ✅ CALLBACK ពី VIPTP (ពេល AutoStop)
+-- ✅ Fixed: ត្រឡប់ទៅ AFK ពេល VIPTP ចប់ + អត់ឃើញ Egg
 -- ==================================================
 local function OnVIPTPComplete()
     if not FarmingEnabled then return end
     if not WaitingForVIPTP then return end
 
     WaitingForVIPTP = false
+    AFKStarted = false  -- ✅ Reset AFKStarted ដើម្បីឲ្យវាត្រឡប់ទៅ AFK វិញ
     print("[FarmingManager] ✅ VIPTP Completed → Check New Egg")
 
-    -- ពិនិត្យ Egg ថ្មីភ្លាមៗ
     local BestEgg = FindBestEgg()
 
     if BestEgg then
         print("[FarmingManager] New Egg Found: " .. BestEgg.DisplayName)
         PendingEggUid = BestEgg.Uid
 
-        -- ហោះទៅ Safe Zone ជាមុន រួចចាប់ផ្តើម VIPTP
         task.spawn(function()
             local ReachedSafe = FlyToSafeZoneAndWait()
             if ReachedSafe and PendingEggUid then
@@ -466,9 +480,13 @@ local function OnVIPTPComplete()
         end)
     else
         print("[FarmingManager] No New Egg → AFK")
+        print("[FarmingManager] AFKSystem exists:", tostring(_G.YOKUDO_AFKSystem ~= nil))
+        print("[FarmingManager] AFKSystem IsEnabled:", tostring(_G.YOKUDO_AFKSystem and _G.YOKUDO_AFKSystem.IsEnabled()))
+
         if _G.YOKUDO_AFKSystem and not _G.YOKUDO_AFKSystem.IsEnabled() then
             _G.YOKUDO_AFKSystem.Enable()
             AFKStarted = true
+            print("[FarmingManager] ✅ AFKSystem Enabled")
         end
     end
 end
@@ -532,7 +550,6 @@ local function NightLoop()
                     StartVIPTP(PendingEggUid)
                     PendingEggUid = nil
 
-                    -- រង់ចាំ VIPTP ចប់ (Callback នឹងហៅ OnVIPTPComplete)
                     while WaitingForVIPTP and FarmingEnabled do
                         task.wait(0.5)
                     end
@@ -582,7 +599,6 @@ local function DayLoop()
 
             StartVIPTP(BestEgg.Uid)
 
-            -- រង់ចាំ VIPTP ចប់ (Callback នឹងហៅ OnVIPTPComplete)
             while WaitingForVIPTP and FarmingEnabled do
                 task.wait(0.5)
             end
@@ -687,26 +703,7 @@ _G.YOKUDO_FarmingManager = {
     OnVIPTPComplete = OnVIPTPComplete,
 }
 
--- ==================================================
--- REGISTER WITH CHARACTER SYSTEM
--- ==================================================
-if _G.YOKUDO_CharacterSystem then
-    _G.YOKUDO_CharacterSystem:RegisterFeature({
-        Name = "FarmingManager",
-        Enable = Enable,
-        Disable = Disable,
-        IsEnabled = function() return FarmingEnabled end,
-        OnCharacterAdded = function(Char, Hum, Root)
-            if FarmingEnabled then
-                task.wait(1)
-                if FarmingThread then
-                    pcall(function() task.cancel(FarmingThread) end)
-                end
-                FarmingThread = task.spawn(function() MainLoop() end)
-            end
-        end
-    })
-end
+-- ✅ ដក Register ចេញ — មិន Register ជាមួយ CharacterSystem
 
 -- ==================================================
 -- BUILD MESHID MAP ON LOAD
@@ -716,4 +713,4 @@ task.spawn(function()
     BuildMeshIdMap()
 end)
 
-print("✅ FarmingManager Loaded (Egg Check + Day/Night + AFK + VIPTP + Callback)")
+print("✅ FarmingManager Loaded (Egg Check + Day/Night + AFK + VIPTP + Callback | Fixed AFK Return)")
