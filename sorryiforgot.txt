@@ -657,7 +657,13 @@ end
 local v = nil
 local humanoid = nil
 local humanoidRootPart = nil
-workspace:WaitForChild("__OBJECTS"):WaitForChild("Areas"):WaitForChild("StartArea")
+local objects = workspace:WaitForChild("__OBJECTS", 10)
+if objects then
+    local areas = objects:WaitForChild("Areas", 10)
+    if areas then
+        areas:WaitForChild("StartArea", 10)
+    end
+end
 ReplicatedStorage:WaitForChild("Assets"):WaitForChild("Trails")
 local v2 = nil
 local v3 = nil
