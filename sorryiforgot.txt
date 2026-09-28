@@ -1269,7 +1269,8 @@ RunService.Heartbeat:Connect(function(deltaTime)
 	end
 end)
 
-local guardAreas = workspace:WaitForChild("__OBJECTS"):WaitForChild("Areas"):WaitForChild("GuardAreas")
+local objects = workspace:WaitForChild("__OBJECTS", 10)
+local areas = objects and objects:WaitForChild("Areas", 10)
 guardAreas:WaitForChild("Forest")
 
 local tbl10 = {
