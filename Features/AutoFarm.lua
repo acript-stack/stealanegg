@@ -1,7 +1,9 @@
---==================================================
+-- ==================================================
 -- YOKUDO HUB | FEATURE | Auto Farm (FAST)
 -- ✅ Cache PetData + UidCategory → លឿន
---==================================================
+-- ✅ ភ្ជាប់ជាមួយ TeleportSystem ថ្មី (Walk TP + Shot TP)
+-- ✅ Disable VIPTP ពេល StartTeleport (ការពារជាន់គ្នា)
+-- ==================================================
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -76,7 +78,6 @@ BuildMeshIdMap()
 local function GetPetData(AssetCategory)
     if not AssetCategory then return nil end
 
-    -- ✅ Cache Hit
     if Cache.PetData[AssetCategory] then
         return Cache.PetData[AssetCategory]
     end
@@ -101,7 +102,6 @@ local function GetPetData(AssetCategory)
         Data.Icon = Module.Icon
     end
 
-    -- ✅ Save Cache
     Cache.PetData[AssetCategory] = Data
     return Data
 end
@@ -154,7 +154,6 @@ end
 local function FindAssetCategory(EggModel)
     if not EggModel then return nil end
 
-    -- ✅ Cache Hit តាម Uid
     local Uid = EggModel.Name
     if Cache.UidCategory[Uid] then
         return Cache.UidCategory[Uid]
@@ -237,7 +236,7 @@ local function SelectEgg(EggData)
 end
 
 --==================================================
--- START TELEPORT
+-- ✅ START TELEPORT (Disable VIPTP មុន)
 --==================================================
 local function StartTeleport()
     if not SelectedEgg then
@@ -245,19 +244,28 @@ local function StartTeleport()
         return
     end
 
-    local Method = _G.YOKUDO_SelectedMethod or "TeleportFly"
-    local Speed = _G.YOKUDO_TeleportSpeed or 300
+    -- ✅ Disable VIPTP (Tab Farming) មុន
+    if _G.YOKUDO_VIPTP and _G.YOKUDO_VIPTP.IsEnabled() then
+        pcall(function()
+            _G.YOKUDO_VIPTP.Disable()
+        end)
+        print("[AutoFarm] ✅ Disabled VIPTP (Prevent Conflict)")
+    end
 
-    print("[YOKUDO] Start Teleport | Method: " .. Method .. " | Speed: " .. tostring(Speed))
+    print("[YOKUDO] Start Teleport | Target: " .. SelectedEgg.Id)
 
     if _G.YOKUDO_TeleportSystem then
-        _G.YOKUDO_TeleportSystem.SetMethod(Method)
-        _G.YOKUDO_TeleportSystem.SetSpeed(Speed)
         _G.YOKUDO_TeleportSystem.SetTargetId(SelectedEgg.Id)
         _G.YOKUDO_TeleportSystem.Enable()
+        print("[YOKUDO] ✅ TeleportSystem Enabled")
+    else
+        warn("[YOKUDO] TeleportSystem not loaded!")
     end
 end
 
+--==================================================
+-- STOP TELEPORT
+--==================================================
 local function StopTeleport()
     if _G.YOKUDO_TeleportSystem then
         _G.YOKUDO_TeleportSystem.Disable()
@@ -280,7 +288,6 @@ _G.YOKUDO_AutoFarm = {
     GetSelectedEgg = function() return SelectedEgg end,
     FormatMoney = FormatMoney,
 
-    -- ✅ Clear Cache
     ClearCache = function()
         Cache.UidCategory = {}
         print("[AutoFarm] Uid Cache Cleared")
@@ -309,4 +316,4 @@ if _G.YOKUDO_CharacterSystem then
     })
 end
 
-print("✅ AutoFarm Feature Loaded (FAST + CACHE)")
+print("✅ AutoFarm Feature Loaded (FAST + CACHE + TeleportSystem + No Conflict)")
