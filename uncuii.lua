@@ -1689,7 +1689,7 @@ function f.Window(ab, k)
 	j.Content = E
 	j._outLayer = c(H, {Name = "TransitionOut", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Visible = false, ZIndex = 2, Parent = E})
 	j._inLayer = c(H, {Name = "TransitionIn", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Visible = false, ZIndex = 3, Parent = E})
-	local w = c("TextButton", {AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, 14), Size = UDim2.fromOffset(34, 34), BackgroundColor3 = a.Surface2, BackgroundTransparency = 1, Text = "Ã—", TextColor3 = a.Muted, TextSize = 28, FontFace = i.Bold, AutoButtonColor = false, ZIndex = 5, Parent = E})
+	local w = c("TextButton", {AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, 14), Size = UDim2.fromOffset(34, 34), BackgroundColor3 = a.Surface2, BackgroundTransparency = 1, Text = "X", TextColor3 = a.Muted, TextSize = 28, FontFace = i.Bold, AutoButtonColor = false, ZIndex = 5, Parent = E})
 	o(w, 0, 0, 1, 0)
 	e(w, UDim.new(0, 8))
 	w.MouseEnter:Connect(function()
@@ -2891,7 +2891,7 @@ function g:Notify(f)
 		n = 24
 	end
 	d {Position = UDim2.fromOffset(n, 0), Size = UDim2.new(1, -28-n, 0, 16), Text = f.Title or "Notification", TextSize = 14, TextColor3 = s, Parent = m}
-	local p = c("TextButton", {AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 6, 0, -5), Size = UDim2.fromOffset(24, 24), BackgroundTransparency = 1, Text = "Ã—", TextColor3 = a.Muted, TextSize = 22, FontFace = i.Bold, AutoButtonColor = false, Parent = m})
+	local p = c("TextButton", {AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 6, 0, -5), Size = UDim2.fromOffset(24, 24), BackgroundTransparency = 1, Text = "X", TextColor3 = a.Muted, TextSize = 22, FontFace = i.Bold, AutoButtonColor = false, Parent = m})
 	p.MouseEnter:Connect(function()
 		b(p, {TextColor3 = a.Text}, .15)
 	end)
